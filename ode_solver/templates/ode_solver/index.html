@@ -56,16 +56,36 @@
             border-radius: 8px;
             border-left: 4px solid #3498db;
             margin-bottom: 20px;
+            overflow-x: auto; /* Enable horizontal scrolling if needed */
+            white-space: nowrap; /* Prevent wrapping */
         }
 
         .equation-row {
             margin-bottom: 15px;
             font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 800px; /* Ensure minimum width to prevent wrapping */
+        }
+
+        .equation-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: #2c3e50;
         }
 
         .latex-equation {
             font-family: 'Times New Roman', serif;
             font-style: italic;
+            flex: 1;
+            overflow-x: auto;
+            white-space: nowrap;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .conditions-display {
@@ -180,20 +200,20 @@
                 <div class="equation-display">
                     <h3>System of Equations:</h3>
                     <div class="equation-row">
-                        <strong>\(\displaystyle \frac{dx}{dt} =\)</strong> <span id="eq-dx"
-                            class="latex-equation"></span>
+                        <span class="equation-label">dx/dt =</span>
+                        <span id="eq-dx" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
-                        <strong>\(\displaystyle \frac{dy}{dt} =\)</strong> <span id="eq-dy"
-                            class="latex-equation"></span>
+                        <span class="equation-label">dy/dt =</span>
+                        <span id="eq-dy" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
-                        <strong>\(\displaystyle \frac{dz}{dt} =\)</strong> <span id="eq-dz"
-                            class="latex-equation"></span>
+                        <span class="equation-label">dz/dt =</span>
+                        <span id="eq-dz" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
-                        <strong>\(\displaystyle \frac{dw}{dt} =\)</strong> <span id="eq-dw"
-                            class="latex-equation"></span>
+                        <span class="equation-label">dw/dt =</span>
+                        <span id="eq-dw" class="latex-equation"></span>
                     </div>
                 </div>
 
@@ -237,30 +257,16 @@
                     <h3>⚙️ Create Custom Task</h3>
                     <p>Enter coefficients and initial conditions.</p>
                     
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
                         <div>
-                            <label><strong>Linear (x,y,z,w)</strong></label>
+                            <label><strong>Linear Coefficients (x,y,z,w)</strong></label>
                             <input type="number" id="lin-0" placeholder="Coeff for x" step="0.1" value="0">
                             <input type="number" id="lin-1" placeholder="Coeff for y" step="0.1" value="0">
                             <input type="number" id="lin-2" placeholder="Coeff for z" step="0.1" value="0">
                             <input type="number" id="lin-3" placeholder="Coeff for w" step="0.1" value="0">
                         </div>
                         <div>
-                            <label><strong>Quadratic (x²,y²,z²,w²)</strong></label>
-                            <input type="number" id="quad-0" placeholder="Coeff for x²" step="0.1" value="0">
-                            <input type="number" id="quad-1" placeholder="Coeff for y²" step="0.1" value="0">
-                            <input type="number" id="quad-2" placeholder="Coeff for z²" step="0.1" value="0">
-                            <input type="number" id="quad-3" placeholder="Coeff for w²" step="0.1" value="0">
-                        </div>
-                        <div>
-                            <label><strong>Cubic (x³,y³,z³,w³)</strong></label>
-                            <input type="number" id="cubic-0" placeholder="Coeff for x³" step="0.01" value="0">
-                            <input type="number" id="cubic-1" placeholder="Coeff for y³" step="0.01" value="0">
-                            <input type="number" id="cubic-2" placeholder="Coeff for z³" step="0.01" value="0">
-                            <input type="number" id="cubic-3" placeholder="Coeff for w³" step="0.01" value="0">
-                        </div>
-                        <div>
-                            <label><strong>Initial Cond (t=0)</strong></label>
+                            <label><strong>Initial Conditions (t=0)</strong></label>
                             <input type="number" id="ic-x0" placeholder="x0" step="0.1" value="0.5">
                             <input type="number" id="ic-y0" placeholder="y0" step="0.1" value="0.5">
                             <input type="number" id="ic-z0" placeholder="z0" step="0.1" value="0.5">
@@ -1031,12 +1037,24 @@
         async function submitCustomTask() {
             const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
 
+            // Create a 4x4 linear matrix from the input values
+            // Each row represents the coefficients for dx/dt, dy/dt, dz/dt, dw/dt
+            const linearMatrix = [
+                [getVal('lin-0'), 0, 0, 0],  // dx/dt coefficients
+                [0, getVal('lin-1'), 0, 0],  // dy/dt coefficients  
+                [0, 0, getVal('lin-2'), 0],  // dz/dt coefficients
+                [0, 0, 0, getVal('lin-3')]   // dw/dt coefficients
+            ];
+
             const payload = {
                 coefficients: {
-                    linear: [getVal('lin-0'), getVal('lin-1'), getVal('lin-2'), getVal('lin-3')],
-                    cross: [getVal('cross-0'), getVal('cross-1'), getVal('cross-2'), getVal('cross-3'), getVal('cross-4'), getVal('cross-5')],
-                    quadratic: [getVal('quad-0'), getVal('quad-1'), getVal('quad-2'), getVal('quad-3')],
-                    cubic: [getVal('cubic-0'), getVal('cubic-1'), getVal('cubic-2'), getVal('cubic-3')]
+                    linear: linearMatrix,
+                    nonlinear: [
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0], 
+                        [0, 0, 0, 0],
+                        [0, 0, 0, 0]
+                    ]
                 },
                 initial_conditions: {
                     x0: getVal('ic-x0'),
