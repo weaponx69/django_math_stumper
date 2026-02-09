@@ -255,16 +255,47 @@
 
                 <div id="custom-task-form" style="display: none; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
                     <h3>⚙️ Create Custom Task</h3>
-                    <p>Enter coefficients and initial conditions.</p>
+                    <p>Enter coefficients for each differential equation and initial conditions.</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <h4>Linear Coefficients (4 Differential Equations)</h4>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px;">
+                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">x</div>
+                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">y</div>
+                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">z</div>
+                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">w</div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="dx-x" placeholder="dx/dt coeff for x" step="0.1" value="0">
+                            <input type="number" id="dx-y" placeholder="dx/dt coeff for y" step="0.1" value="0">
+                            <input type="number" id="dx-z" placeholder="dx/dt coeff for z" step="0.1" value="0">
+                            <input type="number" id="dx-w" placeholder="dx/dt coeff for w" step="0.1" value="0">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="dy-x" placeholder="dy/dt coeff for x" step="0.1" value="0">
+                            <input type="number" id="dy-y" placeholder="dy/dt coeff for y" step="0.1" value="0">
+                            <input type="number" id="dy-z" placeholder="dy/dt coeff for z" step="0.1" value="0">
+                            <input type="number" id="dy-w" placeholder="dy/dt coeff for w" step="0.1" value="0">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="dz-x" placeholder="dz/dt coeff for x" step="0.1" value="0">
+                            <input type="number" id="dz-y" placeholder="dz/dt coeff for y" step="0.1" value="0">
+                            <input type="number" id="dz-z" placeholder="dz/dt coeff for z" step="0.1" value="0">
+                            <input type="number" id="dz-w" placeholder="dz/dt coeff for w" step="0.1" value="0">
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="dw-x" placeholder="dw/dt coeff for x" step="0.1" value="0">
+                            <input type="number" id="dw-y" placeholder="dw/dt coeff for y" step="0.1" value="0">
+                            <input type="number" id="dw-z" placeholder="dw/dt coeff for z" step="0.1" value="0">
+                            <input type="number" id="dw-w" placeholder="dw/dt coeff for w" step="0.1" value="0">
+                        </div>
+                    </div>
                     
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
-                        <div>
-                            <label><strong>Linear Coefficients (x,y,z,w)</strong></label>
-                            <input type="number" id="lin-0" placeholder="Coeff for x" step="0.1" value="0">
-                            <input type="number" id="lin-1" placeholder="Coeff for y" step="0.1" value="0">
-                            <input type="number" id="lin-2" placeholder="Coeff for z" step="0.1" value="0">
-                            <input type="number" id="lin-3" placeholder="Coeff for w" step="0.1" value="0">
-                        </div>
                         <div>
                             <label><strong>Initial Conditions (t=0)</strong></label>
                             <input type="number" id="ic-x0" placeholder="x0" step="0.1" value="0.5">
@@ -1040,10 +1071,10 @@
             // Create a 4x4 linear matrix from the input values
             // Each row represents the coefficients for dx/dt, dy/dt, dz/dt, dw/dt
             const linearMatrix = [
-                [getVal('lin-0'), 0, 0, 0],  // dx/dt coefficients
-                [0, getVal('lin-1'), 0, 0],  // dy/dt coefficients  
-                [0, 0, getVal('lin-2'), 0],  // dz/dt coefficients
-                [0, 0, 0, getVal('lin-3')]   // dw/dt coefficients
+                [getVal('dx-x'), getVal('dx-y'), getVal('dx-z'), getVal('dx-w')],  // dx/dt coefficients
+                [getVal('dy-x'), getVal('dy-y'), getVal('dy-z'), getVal('dy-w')],  // dy/dt coefficients  
+                [getVal('dz-x'), getVal('dz-y'), getVal('dz-z'), getVal('dz-w')],  // dz/dt coefficients
+                [getVal('dw-x'), getVal('dw-y'), getVal('dw-z'), getVal('dw-w')]   // dw/dt coefficients
             ];
 
             const payload = {
