@@ -847,7 +847,7 @@
                 finalSolution = data.stored_metrics.final_solution;
             }
 
-            // Generate raw LaTeX steps
+            // Generate raw LaTeX steps with separated prose and math content
             const latexStepsHtml = `
                 <div style="margin-bottom: 20px;">
                     <h4>📝 LaTeX Solution Steps (Copy Individually)</h4>
@@ -860,6 +860,9 @@
                         <h5>Step 1: Problem Statement</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Problem Statement: Solve the system of ODEs with initial conditions.
+                    </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateProblemStatementLatex(data)}
                     </div>
@@ -870,6 +873,9 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h5>Step 2: Integration Method</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
+                    </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Integration Method: Using DOP853 adaptive Runge-Kutta method.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateIntegrationMethodLatex()}
@@ -882,6 +888,9 @@
                         <h5>Step 3: Integration Results</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Integration Results: Final values after numerical integration.
+                    </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateFinalValuesLatex(data)}
                     </div>
@@ -892,6 +901,9 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h5>Step 4: Weighted Sum Calculation</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
+                    </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Weighted Sum Calculation: Formula and step-by-step calculation.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateWeightedSumLatex(data, weightedSum)}
@@ -904,6 +916,9 @@
                         <h5>Step 5: Arc Length</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Arc Length Calculation: Formula and computed value.
+                    </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateArcLengthLatex(arcLength)}
                     </div>
@@ -914,6 +929,9 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h5>Step 6: Curvature Calculation</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
+                    </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Curvature Calculation: Formula and computed value.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateCurvatureLatex(curvature)}
@@ -926,6 +944,9 @@
                         <h5>Step 7: Final Solution Calculation</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Final Solution Calculation: Complete step-by-step calculation.
+                    </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateFinalSolutionLatex(weightedSum, arcLength, curvature, finalSolution)}
                     </div>
@@ -936,6 +957,9 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h5>Step 8: Complete Solution Summary</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
+                    </div>
+                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
+                        Complete Solution Summary: All values and final answer.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateCompleteSolutionLatex(data, weightedSum, arcLength, curvature, finalSolution)}

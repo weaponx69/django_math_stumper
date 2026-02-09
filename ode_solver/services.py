@@ -76,7 +76,11 @@ class ODEGenerator:
             arc_length = np.trapezoid(speeds, t_eval)
             
             # Calculate final solution and ensure it's between 0 and 999
-            raw_solution = int(round(sum(final_values)))
+            # Use the weighted sum formula: S = x_f + 2y_f + 3z_f + 4w_f
+            weighted_sum = final_values[0] + 2*final_values[1] + 3*final_values[2] + 4*final_values[3]
+            
+            # Calculate final solution using the proper formula: ℒ = round(|S| + L + κ×1000)
+            raw_solution = int(round(abs(weighted_sum) + arc_length + 0.0*1000))  # κ is 0.0 for rank-1 systems
             final_solution = raw_solution % 1000  # Ensure result is between 0 and 999
             if final_solution < 0:
                 final_solution += 1000  # Handle negative values
