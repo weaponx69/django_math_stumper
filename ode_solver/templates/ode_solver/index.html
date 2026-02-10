@@ -424,6 +424,30 @@
             }
         }
 
+        function generateRawLatexForCustomTask(task) {
+            // Generate raw LaTeX for custom tasks that don't have equation_preview.raw_latex
+            if (!task.equation_preview.raw_latex) {
+                // Build the raw LaTeX from the individual equation components
+                const dx = task.equation_preview.dx_dt || '0';
+                const dy = task.equation_preview.dy_dt || '0';
+                const dz = task.equation_preview.dz_dt || '0';
+                const dw = task.equation_preview.dw_dt || '0';
+
+                // Create the aligned environment
+                const rawLatex = `$$
+                \\begin{aligned}
+                ${dx} \\\\
+                ${dy} \\\\
+                ${dz} \\\\
+                ${dw}
+                \\end{aligned}
+                $$`;
+
+                // Store it in the task object for later use
+                task.equation_preview.raw_latex = rawLatex;
+            }
+        }
+
         async function submitSolution() {
             if (!currentTask) {
                 showStatus('error', 'No active task. Generate a new challenge first.');
@@ -517,6 +541,9 @@
             if (!currentTask) return;
 
             const latexContent = document.getElementById('raw-latex-content');
+
+            // Generate raw LaTeX for custom tasks that don't have equation_preview.raw_latex
+            generateRawLatexForCustomTask(currentTask);
 
             // Use the raw LaTeX from the backend API response
             let rawLatex = currentTask.equation_preview.raw_latex;
