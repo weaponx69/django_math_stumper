@@ -200,19 +200,15 @@
                 <div class="equation-display">
                     <h3>System of Equations:</h3>
                     <div class="equation-row">
-                        <span class="equation-label">dx/dt =</span>
                         <span id="eq-dx" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
-                        <span class="equation-label">dy/dt =</span>
                         <span id="eq-dy" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
-                        <span class="equation-label">dz/dt =</span>
                         <span id="eq-dz" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
-                        <span class="equation-label">dw/dt =</span>
                         <span id="eq-dw" class="latex-equation"></span>
                     </div>
                 </div>
@@ -978,33 +974,26 @@
         }
 
         function generateProblemStatementLatex(data) {
-            return `$$
-            \\begin{aligned}
-            & \\textbf{Problem Statement:} \\\\
-            & \\text{Solve the system of ODEs:} \\\\
-            & \\begin{cases}
-            \\frac{dx}{dt} = ${data.equation_preview.dx_dt} \\\\
-            \\frac{dy}{dt} = ${data.equation_preview.dy_dt} \\\\
-            \\frac{dz}{dt} = ${data.equation_preview.dz_dt} \\\\
-            \\frac{dw}{dt} = ${data.equation_preview.dw_dt}
-            \\end{cases} \\\\
-            & \\text{with initial conditions:} \\\\
-            & x(0) = ${data.initial_conditions.x0.toFixed(6)}, \\quad y(0) = ${data.initial_conditions.y0.toFixed(6)}, \\\\
-            & z(0) = ${data.initial_conditions.z0.toFixed(6)}, \\quad w(0) = ${data.initial_conditions.w0.toFixed(6)} \\\\
-            & \\text{Find the value of } \\mathcal{L} = \\text{round}(|S| + L + \\kappa \\times 1000) \\\\
-            & \\text{where } S = x_f + 2y_f + 3z_f + 4w_f, \\text{ and } t_f = ${data.target_time.toFixed(6)}
-            \\end{aligned}
+            // Helper to strip out any existing "\frac{d...}{dt} =" if they exist in the data strings
+            const clean = (str) => str.split('=').pop().trim();
+
+            return String.raw`$$
+            \begin{aligned}
+            \frac{dx}{dt} &= ${clean(data.equation_preview.dx_dt)} \\
+            \frac{dy}{dt} &= ${clean(data.equation_preview.dy_dt)} \\
+            \frac{dz}{dt} &= ${clean(data.equation_preview.dz_dt)} \\
+            \frac{dw}{dt} &= ${clean(data.equation_preview.dw_dt)}
+            \end{aligned}
             $$`;
         }
 
         function generateIntegrationMethodLatex() {
             return `$$
             \\begin{aligned}
-            & \\textbf{Integration Method:} \\\\
-            & \\text{Using DOP853 (Dormand-Prince 8(5,3)) adaptive Runge-Kutta method} \\\\
-            & \\text{Tolerances: } rtol = 10^{-14}, \\quad atol = 10^{-16} \\\\
-            & \\text{Method: Adaptive step-size control with error estimation} \\\\
-            & \\text{Integration range: } t \\in [0, t_f]
+            \\text{DOP853} &: \\text{Dormand-Prince 8(5,3) adaptive Runge-Kutta} \\\\
+            \\text{rtol} &= 10^{-14} \\\\
+            \\text{atol} &= 10^{-16} \\\\
+            t &\\in [0, t_f]
             \\end{aligned}
             $$`;
         }
@@ -1012,13 +1001,10 @@
         function generateFinalValuesLatex(data) {
             return `$$
             \\begin{aligned}
-            & \\textbf{Integration Results:} \\\\
-            & \\text{After numerical integration to } t_f = ${data.target_time.toFixed(6)}: \\\\
-            & x(t_f) = ${data.final_values[0].toFixed(6)} \\\\
-            & y(t_f) = ${data.final_values[1].toFixed(6)} \\\\
-            & z(t_f) = ${data.final_values[2].toFixed(6)} \\\\
-            & w(t_f) = ${data.final_values[3].toFixed(6)} \\\\
-            & \\text{These are the final values at the target time.}
+            x(t_f) &= ${data.final_values[0].toFixed(6)} \\\\
+            y(t_f) &= ${data.final_values[1].toFixed(6)} \\\\
+            z(t_f) &= ${data.final_values[2].toFixed(6)} \\\\
+            w(t_f) &= ${data.final_values[3].toFixed(6)}
             \\end{aligned}
             $$`;
         }
@@ -1026,34 +1012,28 @@
         function generateWeightedSumLatex(data, weightedSum) {
             return `$$
             \\begin{aligned}
-            & \\textbf{Weighted Sum Calculation:} \\\\
-            & S = x_f + 2y_f + 3z_f + 4w_f \\\\
-            & S = ${data.final_values[0].toFixed(6)} + 2(${data.final_values[1].toFixed(6)}) + 3(${data.final_values[2].toFixed(6)}) + 4(${data.final_values[3].toFixed(6)}) \\\\
-            & S = ${data.final_values[0].toFixed(6)} + ${(data.final_values[1] * 2).toFixed(6)} + ${(data.final_values[2] * 3).toFixed(6)} + ${(data.final_values[3] * 4).toFixed(6)} \\\\
-            & S = ${weightedSum.toFixed(6)}
+            S &= x_f + 2y_f + 3z_f + 4w_f \\\\
+            S &= ${data.final_values[0].toFixed(6)} + 2(${data.final_values[1].toFixed(6)}) + 3(${data.final_values[2].toFixed(6)}) + 4(${data.final_values[3].toFixed(6)}) \\\\
+            S &= ${data.final_values[0].toFixed(6)} + ${(data.final_values[1] * 2).toFixed(6)} + ${(data.final_values[2] * 3).toFixed(6)} + ${(data.final_values[3] * 4).toFixed(6)} \\\\
+            S &= ${weightedSum.toFixed(6)}
             \\end{aligned}
             $$`;
         }
 
         function generateArcLengthLatex(arcLength) {
-            return `$$
-            \\begin{aligned}
-            & \\textbf{Arc Length Calculation:} \\\\
-            & L = \\int_0^{t_f} \\sqrt{\\left(\\frac{dx}{dt}\\right)^2 + \\left(\\frac{dy}{dt}\\right)^2 + \\left(\\frac{dz}{dt}\\right)^2 + \\left(\\frac{dw}{dt}\\right)^2} \\, dt \\\\
-            & \\text{Computed using numerical quadrature:} \\\\
-            & L = ${arcLength.toFixed(6)}
-            \\end{aligned}
+            return String.raw`$$
+            \begin{aligned}
+            L &= \int_0^{t_f} \sqrt{\left(\frac{dx}{dt}\right)^2 + \left(\frac{dy}{dt}\right)^2 + \left(\frac{dz}{dt}\right)^2 + \left(\frac{dw}{dt}\right)^2} \, dt \\
+            L &= ${arcLength.toFixed(6)}
+            \end{aligned}
             $$`;
         }
 
         function generateCurvatureLatex(curvature) {
             return `$$
             \\begin{aligned}
-            & \\textbf{Curvature Calculation:} \\\\
-            & \\kappa = \\frac{\\|\\mathbf{r}'(t) \\times \\mathbf{r}''(t)\\|}{\\|\\mathbf{r}'(t)\\|^3} \\\\
-            & \\text{Where } \\mathbf{r}(t) = (x(t), y(t), z(t), w(t)) \\\\
-            & \\text{Computed using finite differences on the integration trajectory:} \\\\
-            & \\kappa = ${curvature.toFixed(6)}
+            \\kappa &= \\frac{\\|\\mathbf{r}'(t) \\times \\mathbf{r}''(t)\\|}{\\|\\mathbf{r}'(t)\\|^3} \\\\
+            \\kappa &= ${curvature.toFixed(6)}
             \\end{aligned}
             $$`;
         }
@@ -1061,12 +1041,11 @@
         function generateFinalSolutionLatex(weightedSum, arcLength, curvature, finalSolution) {
             return `$$
             \\begin{aligned}
-            & \\textbf{Final Solution Calculation:} \\\\
-            & \\mathcal{L} = \\text{round}(|S| + L + \\kappa \\times 1000) \\\\
-            & \\mathcal{L} = \\text{round}(|${weightedSum.toFixed(6)}| + ${arcLength.toFixed(6)} + ${curvature.toFixed(6)} \\times 1000) \\\\
-            & \\mathcal{L} = \\text{round}(${Math.abs(weightedSum).toFixed(6)} + ${arcLength.toFixed(6)} + ${(curvature * 1000).toFixed(6)}) \\\\
-            & \\mathcal{L} = \\text{round}(${(Math.abs(weightedSum) + arcLength + curvature * 1000).toFixed(6)}) \\\\
-            & \\mathcal{L} = ${finalSolution}
+            \\mathcal{L} &= \\text{round}(|S| + L + \\kappa \\times 1000) \\\\
+            \\mathcal{L} &= \\text{round}(|${weightedSum.toFixed(6)}| + ${arcLength.toFixed(6)} + ${curvature.toFixed(6)} \\times 1000) \\\\
+            \\mathcal{L} &= \\text{round}(${Math.abs(weightedSum).toFixed(6)} + ${arcLength.toFixed(6)} + ${(curvature * 1000).toFixed(6)}) \\\\
+            \\mathcal{L} &= \\text{round}(${(Math.abs(weightedSum) + arcLength + curvature * 1000).toFixed(6)}) \\\\
+            \\mathcal{L} &= ${finalSolution}
             \\end{aligned}
             $$`;
         }
@@ -1074,17 +1053,12 @@
         function generateCompleteSolutionLatex(data, weightedSum, arcLength, curvature, finalSolution) {
             return `$$
             \\begin{aligned}
-            & \\textbf{Complete Solution:} \\\\
-            & \\text{Given the ODE system with initial conditions:} \\\\
-            & x(0) = ${data.initial_conditions.x0.toFixed(6)}, \\quad y(0) = ${data.initial_conditions.y0.toFixed(6)}, \\\\
-            & z(0) = ${data.initial_conditions.z0.toFixed(6)}, \\quad w(0) = ${data.initial_conditions.w0.toFixed(6)} \\\\
-            & \\text{After integration to } t_f = ${data.target_time.toFixed(6)}: \\\\
-            & x_f = ${data.final_values[0].toFixed(6)}, \\quad y_f = ${data.final_values[1].toFixed(6)}, \\\\
-            & z_f = ${data.final_values[2].toFixed(6)}, \\quad w_f = ${data.final_values[3].toFixed(6)} \\\\
-            & \\text{Weighted sum: } S = ${weightedSum.toFixed(6)} \\\\
-            & \\text{Arc length: } L = ${arcLength.toFixed(6)} \\\\
-            & \\text{Curvature: } \\kappa = ${curvature.toFixed(6)} \\\\
-            & \\text{Final answer: } \\mathcal{L} = ${finalSolution}
+            x_f &= ${data.final_values[0].toFixed(6)}, \\quad y_f = ${data.final_values[1].toFixed(6)} \\\\
+            z_f &= ${data.final_values[2].toFixed(6)}, \\quad w_f = ${data.final_values[3].toFixed(6)} \\\\
+            S &= ${weightedSum.toFixed(6)} \\\\
+            L &= ${arcLength.toFixed(6)} \\\\
+            \\kappa &= ${curvature.toFixed(6)} \\\\
+            \\mathcal{L} &= ${finalSolution}
             \\end{aligned}
             $$`;
         }

@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
 import json
+import decimal
 from decimal import Decimal
 from .models import ODETask
 from .services import ODEGenerator, format_latex_solution, format_equation_latex
@@ -192,7 +193,7 @@ class VerifySolutionView(View):
             response_data = {
                 'task_id': task_id,
                 'submitted_solution': submitted_solution,
-                'ground_truth': ground_truth,
+                'ground_truth': int(ground_truth) if ground_truth is not None else None,
                 'is_correct': is_correct,
                 'details': {
                     'weighted_sum': float(ode_task.weighted_sum) if ode_task.weighted_sum else None,
@@ -215,22 +216,37 @@ class TaskDetailView(View):
     def get(self, request, task_id):
         """Get details of a specific ODE task"""
         try:
-            ode_task = ODETask.objects.get(pk=task_id)
+            # Try to get the task, but catch any database conversion errors
+            try:
+                ode_task = ODETask.objects.get(pk=task_id)
+            except (decimal.InvalidOperation, ValueError, TypeError) as e:
+                print(f"DEBUG: Database conversion error for task {task_id}: {e}")
+                return JsonResponse({'error': f'Database error: {str(e)}'}, status=500)
             
             # Use the same formatting methods as GenerateODETaskView
             generator_view = GenerateODETaskView()
             equation_preview = generator_view.get_equation_preview(ode_task.get_coefficients_dict())
             
+            # Safely convert Decimal fields to float with error handling
+            def safe_float_conversion(value, field_name):
+                try:
+                    if value is None:
+                        return 0.0
+                    return float(value)
+                except (ValueError, TypeError, decimal.InvalidOperation) as e:
+                    print(f"DEBUG: Error converting {field_name}: {e}")
+                    return 0.0
+            
             response_data = {
                 'task_id': ode_task.pk,
                 'coefficients': ode_task.get_coefficients_dict(),
                 'initial_conditions': {
-                    'x0': float(ode_task.x0),
-                    'y0': float(ode_task.y0),
-                    'z0': float(ode_task.z0),
-                    'w0': float(ode_task.w0),
+                    'x0': safe_float_conversion(ode_task.x0, 'x0'),
+                    'y0': safe_float_conversion(ode_task.y0, 'y0'),
+                    'z0': safe_float_conversion(ode_task.z0, 'z0'),
+                    'w0': safe_float_conversion(ode_task.w0, 'w0'),
                 },
-                'target_time': float(ode_task.target_time),
+                'target_time': safe_float_conversion(ode_task.target_time, 'target_time'),
                 'equation_preview': equation_preview,
                 'created_at': ode_task.created_at.isoformat(),
                 'is_valid': ode_task.is_valid
@@ -293,7 +309,7 @@ class TaskSolutionView(View):
                     'weighted_sum': float(ode_task.weighted_sum) if ode_task.weighted_sum else 0.0,
                     'arc_length': float(ode_task.arc_length) if ode_task.arc_length else 0.0,
                     'curvature': float(ode_task.curvature) if ode_task.curvature else 0.0,
-                    'final_solution': ode_task.final_solution,
+                    'final_solution': int(ode_task.final_solution) if ode_task.final_solution is not None else None,
                 },
                 'recalculated_metrics': {
                     'weighted_sum': recalculated_weighted_sum,
