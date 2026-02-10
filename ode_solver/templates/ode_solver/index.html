@@ -433,7 +433,7 @@
                 const dz = task.equation_preview.dz_dt || '0';
                 const dw = task.equation_preview.dw_dt || '0';
 
-                // Create the aligned environment
+                // Create the aligned environment with pure mathematical content
                 const rawLatex = `$$
                 \\begin{aligned}
                 ${dx} \\\\
@@ -561,18 +561,14 @@
 
             // Create the details section with explanations (separate from math)
             const detailsSection = `
-            \\textbf{Initial Conditions:}
-            \\begin{aligned}
-            x(0) &= ${currentTask.initial_conditions.x0.toFixed(6)} \\\\
-            y(0) &= ${currentTask.initial_conditions.y0.toFixed(6)} \\\\
-            z(0) &= ${currentTask.initial_conditions.z0.toFixed(6)} \\\\
-            w(0) &= ${currentTask.initial_conditions.w0.toFixed(6)}
-            \\end{aligned}
+Initial Conditions:
+$$ x(0) = ${currentTask.initial_conditions.x0.toFixed(6)} $$
+$$ y(0) = ${currentTask.initial_conditions.y0.toFixed(6)} $$
+$$ z(0) = ${currentTask.initial_conditions.z0.toFixed(6)} $$
+$$ w(0) = ${currentTask.initial_conditions.w0.toFixed(6)} $$
 
-            \\textbf{Target Time:}
-            \\begin{aligned}
-            t_f &= ${currentTask.target_time.toFixed(6)}
-            \\end{aligned}`;
+Target Time:
+$$ t_f = ${currentTask.target_time.toFixed(6)} $$`;
 
             // Combine both sections for the final output
             const fullLatex = `${mathSection}
