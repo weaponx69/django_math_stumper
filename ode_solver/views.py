@@ -71,12 +71,27 @@ class GenerateODETaskView(View):
     def get_equation_preview(self, coefficients, target_time=None, initial_conditions=None):
         """Generate a LaTeX representation of the ODE system"""
         # This will be used for frontend display
-        return {
+        preview = {
             'dx_dt': format_equation_latex(coefficients, 'x'),
             'dy_dt': format_equation_latex(coefficients, 'y'),
             'dz_dt': format_equation_latex(coefficients, 'z'),
             'dw_dt': format_equation_latex(coefficients, 'w'),
         }
+        
+        # For consistency, also generate a basic raw_latex field
+        # This ensures both generated and custom tasks have the same structure
+        if target_time is not None and initial_conditions is not None:
+            # Generate a simple raw LaTeX representation
+            dx = preview['dx_dt']
+            dy = preview['dy_dt']
+            dz = preview['dz_dt']
+            dw = preview['dw_dt']
+            
+            # Create the aligned environment with pure mathematical content
+            raw_latex = f"$$\n\\begin{{aligned}}\n{dx} \\\\\n{dy} \\\\\n{dz} \\\\\n{dw}\n\\end{{aligned}}\n$$"
+            preview['raw_latex'] = raw_latex
+        
+        return preview
 
 
 

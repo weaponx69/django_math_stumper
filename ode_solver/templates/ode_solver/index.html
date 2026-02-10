@@ -708,7 +708,7 @@ $$ t_f = ${currentTask.target_time.toFixed(6)} $$`;
                 </div>
                 
                 <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                    <h4>🔬 Integration Method: DOP853 Algorithm</h4>
+                    <h4> Integration Method: DOP853 Algorithm</h4>
                     <p><strong>Method:</strong> Dormand-Prince 8(5,3) - An adaptive Runge-Kutta method</p>
                     <p><strong>How it works:</strong></p>
                     <ul>
@@ -881,116 +881,121 @@ $$ t_f = ${currentTask.target_time.toFixed(6)} $$`;
             // Generate raw LaTeX steps with separated prose and math content
             const latexStepsHtml = `
                 <div style="margin-bottom: 20px;">
-                    <h4>📝 LaTeX Solution Steps (Copy Individually)</h4>
+                    <h4>LaTeX Solution Steps (Copy Individually)</h4>
                     <p><em>Each step below is in raw LaTeX format and can be copied separately for showing your work</em></p>
                 </div>
-                
-                <!-- Step 1: Problem Statement -->
+                 <!-- Step 0: Main Problem Prompt -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 1: Problem Statement</h5>
+                        <h5 style="margin: 0; font-family: inherit;">Step 0: Problem Statement</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
-                    <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Problem Statement: Solve the system of ODEs with initial conditions.
+
+                    <div style="margin-bottom: 15px; color: #333; line-height: 1.5; font-family: inherit;">
+                        Evaluate the 4D autonomous dynamical system (u_dot = Au) over the specified time interval. 
+                        Starting from the initial configuration, determine the state trajectory and compute 
+                        the resulting terminal scalar sum. 
+                        <br><br>
+                        <strong>Question:</strong> What is the final integer value (L) at the target time?
                     </div>
-                    <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
-                ${generateProblemStatementLatex(data)}
+
+                    <div class="latex-content" id="problem-statement-math" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
+                        ${generateProblemStatementLatex(data)}
                     </div>
                 </div>
                 
-                <!-- Step 2: Integration Method -->
+                <!-- Step 1: Integration Method -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 2: Integration Method</h5>
+                        <h5>Step 1: Integration Method</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Integration Method: Using DOP853 adaptive Runge-Kutta method.
+                        Numerical Integration Strategy:To ensure the 4D state trajectory maintains 6-digit analytical precision, the system was integrated using the DOP853 algorithm. This implementation of the Dormand-Prince 8(5,3) method was selected for its high-order accuracy and robust error-control mechanisms. By utilizing embedded 5th and 3rd-order formulas, the solver dynamically adjusted the step size to satisfy stringent convergence criteria, effectively mitigating numerical drift over the interval $t \in [0, t_f]$.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateIntegrationMethodLatex()}
                     </div>
                 </div>
                 
-                <!-- Step 3: Final Values -->
+                <!-- Step 2: Final Values -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 3: Integration Results</h5>
+                        <h5>Step 2: Integration Results</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Integration Results: Final values after numerical integration.
+                        Integration Results: After applying the DOP853 adaptive Runge-Kutta method over the time interval [0, t_f], we obtain the final values of the system variables at the target time. These values represent the state of the dynamical system after evolving according to the given differential equations with the specified initial conditions. The numerical integration provides accurate approximations of the true solution at the final time point.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateFinalValuesLatex(data)}
                     </div>
                 </div>
                 
-                <!-- Step 4: Weighted Sum Calculation -->
+                <!-- Step 3: Weighted Sum Calculation -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 4: Weighted Sum Calculation</h5>
+                        <h5>Step 3: Weighted Sum Calculation</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Weighted Sum Calculation: Formula and step-by-step calculation.
+                        Weighted Sum Calculation: We compute a weighted sum of the final values where each variable is multiplied by its corresponding weight factor. This creates a composite metric that combines all four system variables into a single numerical value. The weighting scheme (1, 2, 3, 4) emphasizes the later variables more heavily, creating a specific pattern that makes the final answer unique to this particular system configuration.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateWeightedSumLatex(data, weightedSum)}
                     </div>
                 </div>
                 
-                <!-- Step 5: Arc Length -->
+                <!-- Step 4: Arc Length -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 5: Arc Length</h5>
+                        <h5>Step 4: Arc Length</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Arc Length Calculation: Formula and computed value.
+                        Arc Length Calculation: We compute the total arc length of the solution trajectory in four-dimensional space. This represents the total distance traveled by the system state vector as it evolves from the initial conditions to the final time. The arc length provides a measure of the complexity and extent of the system's evolution, integrating the instantaneous speed of the system over the entire time interval.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateArcLengthLatex(arcLength)}
                     </div>
                 </div>
                 
-                <!-- Step 6: Curvature Calculation -->
+                <!-- Step 5: Curvature Calculation -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 6: Curvature Calculation</h5>
+                        <h5>Step 5: Curvature Calculation</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Curvature Calculation: Formula and computed value.
+                        Curvature Calculation: We compute the curvature of the solution trajectory, which measures how sharply the path bends at each point in time. Curvature is defined as the magnitude of the cross product of the first and second derivatives divided by the cube of the speed. This provides insight into the geometric properties of the solution path and contributes significantly to the final answer through its scaled contribution.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateCurvatureLatex(curvature)}
                     </div>
                 </div>
                 
-                <!-- Step 7: Final Solution -->
+                <!-- Step 6: Final Solution -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 7: Final Solution Calculation</h5>
+                        <h5>Step 6: Final Solution Calculation</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Final Solution Calculation: Complete step-by-step calculation.
+                        Final Solution Calculation: We combine all computed metrics into the final answer using the specified formula. The absolute value of the weighted sum ensures we work with positive values, the arc length contributes the total path distance, and the curvature is scaled by a factor of 1000 to provide significant contribution to the final result. The final step involves rounding to the nearest integer to obtain the discrete answer required for the challenge.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateFinalSolutionLatex(weightedSum, arcLength, curvature, finalSolution)}
                     </div>
                 </div>
                 
-                <!-- Step 8: Complete Solution -->
+                <!-- Step 7: Complete Solution -->
                 <div class="latex-step" style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h5>Step 8: Complete Solution Summary</h5>
+                        <h5>Step 7: Complete Solution Summary</h5>
                         <button onclick="copyLatexStep(this)" style="background: #27ae60; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-size: 12px;">📋 Copy Step</button>
                     </div>
                     <div style="margin-bottom: 10px; color: #666; font-style: italic;">
-                        Complete Solution Summary: All values and final answer.
+                        Complete Solution Summary: This final step consolidates all computed values into a comprehensive summary of the solution. We present the final state values of all four system variables, the calculated weighted sum, the total arc length of the trajectory, the maximum curvature encountered, and the final integer answer. This provides a complete picture of the system's evolution and the mathematical metrics that characterize its behavior over the specified time interval.
                     </div>
                     <div class="latex-content" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 14px; white-space: pre-wrap;">
                 ${generateCompleteSolutionLatex(data, weightedSum, arcLength, curvature, finalSolution)}
@@ -1009,9 +1014,13 @@ $$ t_f = ${currentTask.target_time.toFixed(6)} $$`;
         }
 
         function generateProblemStatementLatex(data) {
-            // Helper to strip out any existing "\frac{d...}{dt} =" if they exist in the data strings
-            const clean = (str) => str.split('=').pop().trim();
+            const clean = (str) => {
+                if (!str) return "";
+                return str.split('=').pop().trim();
+            };
 
+            // We use String.raw to preserve the single backslashes for commands
+            // But we need \\ at the end of lines for the LaTeX newline command
             return String.raw`$$
             \begin{aligned}
             \frac{dx}{dt} &= ${clean(data.equation_preview.dx_dt)} \\
@@ -1024,8 +1033,8 @@ $$ t_f = ${currentTask.target_time.toFixed(6)} $$`;
 
         function generateIntegrationMethodLatex() {
             return `Method: DOP853 (Dormand-Prince 8(5,3))
-Tolerances: $$ rtol=10^{-14}, atol=10^{-16} $$
-Time Range: $$ t \\in [0, t_f] $$`;
+                    Tolerances: $$ rtol=10^{-14}, atol=10^{-16} $$
+                    Time Range: $$ t \\in [0, t_f] $$`;
         }
 
         function generateFinalValuesLatex(data) {
