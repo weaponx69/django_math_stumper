@@ -240,6 +240,7 @@
                 <div class="controls">
                     <button onclick="generateNewTask()">🔄 Generate New</button>
                     <button class="secondary" onclick="showCustomTaskForm()" style="background: #2ecc71;">⚙️ Custom Task</button>
+                    <button class="secondary" onclick="saveCurrentPrompt()" style="background: #f39c12; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💾 Save Prompt</button>
                     <button class="secondary" onclick="showDetails()">📊 Show Details</button>
                     <button class="secondary" onclick="showSolution()"
                         style="background: #e74c3c; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">🔍
@@ -1198,6 +1199,198 @@ $$ t_f = ${currentTask.target_time.toFixed(6)} $$`;
                 alert('Failed to copy. Please select the text manually.');
             } finally {
                 document.body.removeChild(textarea);
+            }
+        }
+
+        async function saveCurrentPrompt() {
+            if (!currentTask) {
+                showStatus('error', 'No active task to save. Generate a challenge first.');
+                return;
+            }
+
+            // Create a prompt object with all the relevant information
+            const promptData = {
+                task_id: currentTask.task_id,
+                coefficients: currentTask.coefficients,
+                initial_conditions: currentTask.initial_conditions,
+                target_time: currentTask.target_time,
+                equations: {
+                    dx_dt: currentTask.equation_preview.dx_dt,
+                    dy_dt: currentTask.equation_preview.dy_dt,
+                    dz_dt: currentTask.equation_preview.dz_dt,
+                    dw_dt: currentTask.equation_preview.dw_dt
+                },
+                timestamp: new Date().toISOString(),
+                type: 'saved_prompt'
+            };
+
+            try {
+                // Save to localStorage for offline access
+                const savedPrompts = JSON.parse(localStorage.getItem('saved_math_prompts') || '[]');
+                savedPrompts.push(promptData);
+                localStorage.setItem('saved_math_prompts', JSON.stringify(savedPrompts));
+
+                // Also try to save to server if we have a task_id
+                if (currentTask.task_id) {
+                    await fetch('/api/save_prompt/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            task_id: currentTask.task_id,
+                            prompt_data: promptData
+                        })
+                    });
+                }
+
+                showStatus('success', 'Prompt saved successfully! 📝');
+                
+                // Show saved prompts list
+                showSavedPrompts();
+                
+            } catch (error) {
+                showStatus('error', 'Failed to save prompt: ' + error.message);
+            }
+        }
+
+        function showSavedPrompts() {
+            const savedPrompts = JSON.parse(localStorage.getItem('saved_math_prompts') || '[]');
+            
+            if (savedPrompts.length === 0) {
+                showStatus('info', 'No saved prompts found.');
+                return;
+            }
+
+            // Create a modal or expandable section to show saved prompts
+            let promptList = '<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f8f9fa;">';
+            promptList += '<h4 style="margin-top: 0;">💾 Saved Math Prompts (' + savedPrompts.length + ')</h4>';
+            
+            savedPrompts.forEach((prompt, index) => {
+                const date = new Date(prompt.timestamp).toLocaleString();
+                promptList += `
+                    <div style="border-bottom: 1px solid #ddd; padding: 10px; margin-bottom: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Prompt ${index + 1}</strong>
+                            <span style="font-size: 12px; color: #666;">${date}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                            Task ID: ${prompt.task_id || 'Custom'} | t_f: ${prompt.target_time.toFixed(3)}
+                        </div>
+                        <div style="margin-top: 5px;">
+                            <button onclick="loadSavedPrompt(${index})" style="background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-right: 5px;">📂 Load</button>
+                            <button onclick="exportPrompt(${index})" style="background: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-right: 5px;">📤 Export</button>
+                            <button onclick="deletePrompt(${index})" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            promptList += '</div>';
+            
+            // Show in a modal or expandable section
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '50%';
+            modal.style.left = '50%';
+            modal.style.transform = 'translate(-50%, -50%)';
+            modal.style.background = 'white';
+            modal.style.padding = '20px';
+            modal.style.borderRadius = '8px';
+            modal.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            modal.style.zIndex = '1000';
+            modal.style.maxWidth = '600px';
+            modal.style.width = '90%';
+            modal.innerHTML = `
+                ${promptList}
+                <div style="text-align: right; margin-top: 10px;">
+                    <button onclick="this.parentElement.remove()" style="background: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function loadSavedPrompt(index) {
+            const savedPrompts = JSON.parse(localStorage.getItem('saved_math_prompts') || '[]');
+            const prompt = savedPrompts[index];
+            
+            if (prompt) {
+                // Load the prompt data back into the current task
+                currentTask = {
+                    task_id: prompt.task_id,
+                    coefficients: prompt.coefficients,
+                    initial_conditions: prompt.initial_conditions,
+                    target_time: prompt.target_time,
+                    equation_preview: prompt.equations
+                };
+                
+                displayTask(currentTask);
+                
+                // Close the modal
+                const modal = document.querySelector('div[style*="position: fixed"]');
+                if (modal) modal.remove();
+                
+                showStatus('success', 'Prompt loaded successfully! 🔄');
+            }
+        }
+
+        function exportPrompt(index) {
+            const savedPrompts = JSON.parse(localStorage.getItem('saved_math_prompts') || '[]');
+            const prompt = savedPrompts[index];
+            
+            if (prompt) {
+                // Create a downloadable text file
+                const content = `
+Math Prompt Export
+
+Task ID: ${prompt.task_id || 'Custom'}
+Generated: ${new Date(prompt.timestamp).toLocaleString()}
+Target Time: ${prompt.target_time}
+
+Equations:
+${prompt.equations.dx_dt}
+${prompt.equations.dy_dt}
+${prompt.equations.dz_dt}
+${prompt.equations.dw_dt}
+
+Initial Conditions:
+x(0) = ${prompt.initial_conditions.x0}
+y(0) = ${prompt.initial_conditions.y0}
+z(0) = ${prompt.initial_conditions.z0}
+w(0) = ${prompt.initial_conditions.w0}
+
+Coefficients:
+${JSON.stringify(prompt.coefficients, null, 2)}
+                `.trim();
+
+                // Create download link
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `math_prompt_${prompt.task_id || 'custom'}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('success', 'Prompt exported successfully! 📤');
+            }
+        }
+
+        function deletePrompt(index) {
+            if (confirm('Are you sure you want to delete this saved prompt?')) {
+                const savedPrompts = JSON.parse(localStorage.getItem('saved_math_prompts') || '[]');
+                savedPrompts.splice(index, 1);
+                localStorage.setItem('saved_math_prompts', JSON.stringify(savedPrompts));
+                
+                // Refresh the list
+                const modal = document.querySelector('div[style*="position: fixed"]');
+                if (modal) modal.remove();
+                
+                showSavedPrompts();
+                showStatus('info', 'Prompt deleted successfully. 🗑️');
             }
         }
     </script>
