@@ -552,20 +552,32 @@
             // Assuming format: $$\begin{aligned} ... \end{aligned}$$
             rawLatex = rawLatex.replace(/^\$\$\\begin{aligned}\s*/, '').replace(/\s*\\end{aligned}\$\$$/, '');
 
-            // Add initial conditions and target time to the raw LaTeX
-            const fullLatex = `$$
+            // Create the mathematical equations section (pure LaTeX, no prose)
+            const mathSection = `$$
             \\begin{aligned}
             ${rawLatex}
-            \\\\
-            \\text{Initial conditions:} \\\\
+            \\end{aligned}
+            $$`;
+
+            // Create the details section with explanations (separate from math)
+            const detailsSection = `
+            \\textbf{Initial Conditions:}
+            \\begin{aligned}
             x(0) &= ${currentTask.initial_conditions.x0.toFixed(6)} \\\\
             y(0) &= ${currentTask.initial_conditions.y0.toFixed(6)} \\\\
             z(0) &= ${currentTask.initial_conditions.z0.toFixed(6)} \\\\
-            w(0) &= ${currentTask.initial_conditions.w0.toFixed(6)} \\\\
-            \\\\
-            \\text{Target time: } t_f &= ${currentTask.target_time.toFixed(6)}
+            w(0) &= ${currentTask.initial_conditions.w0.toFixed(6)}
             \\end{aligned}
-            $$`;
+
+            \\textbf{Target Time:}
+            \\begin{aligned}
+            t_f &= ${currentTask.target_time.toFixed(6)}
+            \\end{aligned}`;
+
+            // Combine both sections for the final output
+            const fullLatex = `${mathSection}
+
+            ${detailsSection}`;
 
             // Set as plain text in textarea for copying
             latexContent.value = fullLatex;
@@ -1015,14 +1027,9 @@
         }
 
         function generateIntegrationMethodLatex() {
-            return `$$
-            \\begin{aligned}
-            \\text{DOP853} &: \\text{Dormand-Prince 8(5,3) adaptive Runge-Kutta} \\\\
-            \\text{rtol} &= 10^{-14} \\\\
-            \\text{atol} &= 10^{-16} \\\\
-            t &\\in [0, t_f]
-            \\end{aligned}
-            $$`;
+            return `Method: DOP853 (Dormand-Prince 8(5,3))
+Tolerances: $$ rtol=10^{-14}, atol=10^{-16} $$
+Time Range: $$ t \\in [0, t_f] $$`;
         }
 
         function generateFinalValuesLatex(data) {
