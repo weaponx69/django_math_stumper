@@ -11,8 +11,9 @@ from .services import ODEGenerator, format_latex_solution, format_equation_latex
 
 
 def index(request):
-    """Main frontend page"""
-    return render(request, 'ode_solver/index.html')
+    """Redirect to React frontend"""
+    from django.http import HttpResponseRedirect
+    return HttpResponseRedirect('http://localhost:3000')
 
 
 class GenerateODETaskView(View):
