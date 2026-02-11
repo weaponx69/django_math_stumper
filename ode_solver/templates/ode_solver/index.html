@@ -200,15 +200,19 @@
                 <div class="equation-display">
                     <h3>System of Equations:</h3>
                     <div class="equation-row">
+                        <span class="equation-label">dx/dt =</span>
                         <span id="eq-dx" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
+                        <span class="equation-label">dy/dt =</span>
                         <span id="eq-dy" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
+                        <span class="equation-label">dz/dt =</span>
                         <span id="eq-dz" class="latex-equation"></span>
                     </div>
                     <div class="equation-row">
+                        <span class="equation-label">dw/dt =</span>
                         <span id="eq-dw" class="latex-equation"></span>
                     </div>
                 </div>
@@ -254,74 +258,116 @@
                     <h3>⚙️ Create Custom Task</h3>
                     <p>Enter coefficients for each differential equation and initial conditions.</p>
                     
-                    <div style="margin-bottom: 15px;">
-                        <h4>Linear Coefficients (4 Differential Equations)</h4>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px;">
-                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">x</div>
-                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">y</div>
-                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">z</div>
-                            <div style="text-align: center; font-weight: bold; background: #f8f9fa; padding: 5px; border-radius: 4px;">w</div>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
-                            <input type="number" id="dx-x" placeholder="dx/dt coeff for x" step="0.1" value="0">
-                            <input type="number" id="dx-y" placeholder="dx/dt coeff for y" step="0.1" value="0">
-                            <input type="number" id="dx-z" placeholder="dx/dt coeff for z" step="0.1" value="0">
-                            <input type="number" id="dx-w" placeholder="dx/dt coeff for w" step="0.1" value="0">
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
-                            <input type="number" id="dy-x" placeholder="dy/dt coeff for x" step="0.1" value="0">
-                            <input type="number" id="dy-y" placeholder="dy/dt coeff for y" step="0.1" value="0">
-                            <input type="number" id="dy-z" placeholder="dy/dt coeff for z" step="0.1" value="0">
-                            <input type="number" id="dy-w" placeholder="dy/dt coeff for w" step="0.1" value="0">
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
-                            <input type="number" id="dz-x" placeholder="dz/dt coeff for x" step="0.1" value="0">
-                            <input type="number" id="dz-y" placeholder="dz/dt coeff for y" step="0.1" value="0">
-                            <input type="number" id="dz-z" placeholder="dz/dt coeff for z" step="0.1" value="0">
-                            <input type="number" id="dz-w" placeholder="dz/dt coeff for w" step="0.1" value="0">
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
-                            <input type="number" id="dw-x" placeholder="dw/dt coeff for x" step="0.1" value="0">
-                            <input type="number" id="dw-y" placeholder="dw/dt coeff for y" step="0.1" value="0">
-                            <input type="number" id="dw-z" placeholder="dw/dt coeff for z" step="0.1" value="0">
-                            <input type="number" id="dw-w" placeholder="dw/dt coeff for w" step="0.1" value="0">
+                    <div style="margin-bottom: 20px;">
+                        <h4>Linear Coefficients (4×4 Matrix)</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <div style="display: grid; grid-template-columns: 120px repeat(4, 1fr); gap: 10px; margin-bottom: 10px; font-weight: bold;">
+                                <div></div>
+                                <div style="text-align: center; background: #e9ecef; padding: 5px; border-radius: 4px;">x</div>
+                                <div style="text-align: center; background: #e9ecef; padding: 5px; border-radius: 4px;">y</div>
+                                <div style="text-align: center; background: #e9ecef; padding: 5px; border-radius: 4px;">z</div>
+                                <div style="text-align: center; background: #e9ecef; padding: 5px; border-radius: 4px;">w</div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px repeat(4, 1fr); gap: 10px; margin-bottom: 10px; align-items: center;">
+                                <div style="font-weight: bold; background: #e9ecef; padding: 8px; border-radius: 4px;">dx/dt =</div>
+                                <input type="number" id="dx-x" placeholder="coeff for x" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dx-y" placeholder="coeff for y" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dx-z" placeholder="coeff for z" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dx-w" placeholder="coeff for w" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px repeat(4, 1fr); gap: 10px; margin-bottom: 10px; align-items: center;">
+                                <div style="font-weight: bold; background: #e9ecef; padding: 8px; border-radius: 4px;">dy/dt =</div>
+                                <input type="number" id="dy-x" placeholder="coeff for x" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dy-y" placeholder="coeff for y" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dy-z" placeholder="coeff for z" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dy-w" placeholder="coeff for w" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px repeat(4, 1fr); gap: 10px; margin-bottom: 10px; align-items: center;">
+                                <div style="font-weight: bold; background: #e9ecef; padding: 8px; border-radius: 4px;">dz/dt =</div>
+                                <input type="number" id="dz-x" placeholder="coeff for x" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dz-y" placeholder="coeff for y" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dz-z" placeholder="coeff for z" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dz-w" placeholder="coeff for w" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px repeat(4, 1fr); gap: 10px; align-items: center;">
+                                <div style="font-weight: bold; background: #e9ecef; padding: 8px; border-radius: 4px;">dw/dt =</div>
+                                <input type="number" id="dw-x" placeholder="coeff for x" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dw-y" placeholder="coeff for y" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dw-z" placeholder="coeff for z" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                <input type="number" id="dw-w" placeholder="coeff for w" step="0.1" value="0" style="padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
                         </div>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
-                        <div>
-                            <label><strong>Initial Conditions (t=0)</strong></label>
-                            <input type="number" id="ic-x0" placeholder="x0" step="0.1" value="0.5">
-                            <input type="number" id="ic-y0" placeholder="y0" step="0.1" value="0.5">
-                            <input type="number" id="ic-z0" placeholder="z0" step="0.1" value="0.5">
-                            <input type="number" id="ic-w0" placeholder="w0" step="0.1" value="0.5">
+                    <div style="margin-bottom: 20px;">
+                        <h4>Initial Conditions (t=0)</h4>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">x(0)</label>
+                                <input type="number" id="ic-x0" placeholder="0.5" step="0.1" value="0.5" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">y(0)</label>
+                                <input type="number" id="ic-y0" placeholder="0.5" step="0.1" value="0.5" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">z(0)</label>
+                                <input type="number" id="ic-z0" placeholder="0.5" step="0.1" value="0.5" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">w(0)</label>
+                                <input type="number" id="ic-w0" placeholder="0.5" step="0.1" value="0.5" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            </div>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><strong>Cross Terms</strong> (xy, xz, xw, yz, yw, zw)</label>
-                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
-                            <input type="number" id="cross-0" placeholder="xy" step="0.1" value="0">
-                            <input type="number" id="cross-1" placeholder="xz" step="0.1" value="0">
-                            <input type="number" id="cross-2" placeholder="xw" step="0.1" value="0">
-                            <input type="number" id="cross-3" placeholder="yz" step="0.1" value="0">
-                            <input type="number" id="cross-4" placeholder="yw" step="0.1" value="0">
-                            <input type="number" id="cross-5" placeholder="zw" step="0.1" value="0">
+                    <div style="margin-bottom: 20px;">
+                        <h4>Cross Terms (Nonlinear Coefficients)</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+                                <div style="text-align: center;">
+                                    <label style="display: block; font-size: 12px; color: #6c757d; margin-bottom: 5px;">xy</label>
+                                    <input type="number" id="cross-0" placeholder="0" step="0.1" value="0" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center;">
+                                    <label style="display: block; font-size: 12px; color: #6c757d; margin-bottom: 5px;">xz</label>
+                                    <input type="number" id="cross-1" placeholder="0" step="0.1" value="0" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center;">
+                                    <label style="display: block; font-size: 12px; color: #6c757d; margin-bottom: 5px;">xw</label>
+                                    <input type="number" id="cross-2" placeholder="0" step="0.1" value="0" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center;">
+                                    <label style="display: block; font-size: 12px; color: #6c757d; margin-bottom: 5px;">yz</label>
+                                    <input type="number" id="cross-3" placeholder="0" step="0.1" value="0" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center;">
+                                    <label style="display: block; font-size: 12px; color: #6c757d; margin-bottom: 5px;">yw</label>
+                                    <input type="number" id="cross-4" placeholder="0" step="0.1" value="0" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                </div>
+                                <div style="text-align: center;">
+                                    <label style="display: block; font-size: 12px; color: #6c757d; margin-bottom: 5px;">zw</label>
+                                    <input type="number" id="cross-5" placeholder="0" step="0.1" value="0" style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><strong>Target Time (t)</strong></label>
-                        <input type="number" id="target-time-input" placeholder="t" step="0.1" value="1.0" style="width: 100px;">
+                    <div style="margin-bottom: 20px;">
+                        <h4>Target Time</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #495057;">Integration Time (t)</label>
+                            <input type="number" id="target-time-input" placeholder="1.0" step="0.1" value="1.0" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 16px;">
+                        </div>
                     </div>
 
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="submitCustomTask()" style="background: #2ecc71;">🚀 Create Task</button>
-                        <button onclick="document.getElementById('custom-task-form').style.display='none'" class="secondary">Cancel</button>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="submitCustomTask()" style="background: #2ecc71; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s;">🚀 Create Task</button>
+                        <button onclick="document.getElementById('custom-task-form').style.display='none'" class="secondary" style="background: #95a5a6; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s;">Cancel</button>
                     </div>
                 </div>
 
