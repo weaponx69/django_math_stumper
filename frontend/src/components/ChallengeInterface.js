@@ -168,26 +168,37 @@ const ChallengeInterface = () => {
 
     if (loading && !task) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-                <CircularProgress />
-            </Box>
+            <div className="flex justify-center items-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+            </div>
         );
     }
 
     return (
-        <Box sx={{ p: 2 }}>
-            <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography variant="h4">System Solver [Protocol v2]</Typography>
-                    <Box>
-                        <Button variant="contained" onClick={generateNewTask} disabled={loading} sx={{ mr: 2 }}>
+        <div className="space-y-6">
+            {/* Paper-style container */}
+            <div className="bg-white rounded-lg shadow-md border border-slate-200 p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800">System Solver</h2>
+                        <p className="text-sm text-slate-500 mt-1">Protocol v2 • Optimal Control Theory</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={generateNewTask} 
+                            disabled={loading}
+                            className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                        >
                             {loading ? 'Generating...' : '🔄 Generate New'}
-                        </Button>
-                        <Button variant="outlined" color="success" onClick={() => navigate('/custom')}>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/custom')}
+                            className="px-4 py-2 border-2 border-green-600 text-green-700 rounded-md hover:bg-green-50 transition-colors"
+                        >
                             ⚙️ Custom Task
-                        </Button>
-                    </Box>
-                </Box>
+                        </button>
+                    </div>
+                </div>
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -457,8 +468,8 @@ const ChallengeInterface = () => {
 
                     </Box>
                 )}
-            </Paper>
-        </Box>
+            </div>
+        </div>
     );
 };
 

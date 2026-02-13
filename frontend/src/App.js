@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { CssBaseline, Container, AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import ChallengeInterface from './components/ChallengeInterface';
 import CustomTaskForm from './components/CustomTaskForm';
 
@@ -42,39 +41,61 @@ function LoginButton() {
 
   if (isLoggedIn) {
     return (
-      <Button color="inherit" onClick={handleLogout}>
+      <button 
+        onClick={handleLogout}
+        className="px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors"
+      >
         Logout
-      </Button>
+      </button>
     );
   }
 
   return (
-    <Button color="inherit" onClick={() => window.location.href = 'http://localhost:8000/accounts/login/'}>
+    <button 
+      onClick={() => window.location.href = 'http://localhost:8000/accounts/login/'}
+      className="px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors"
+    >
       Login
-    </Button>
+    </button>
   );
 }
 
 function App() {
   return (
     <Router>
-      <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Math Stumper
-          </Typography>
-          <LoginButton />
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="md">
-        <Box sx={{ my: 4 }}>
+      <div className="min-h-screen bg-slate-50">
+        {/* Professional Header */}
+        <header className="bg-slate-900 text-white shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
+                <span className="text-xl font-bold">∑</span>
+              </div>
+              <h1 className="text-xl font-semibold tracking-tight">
+                Math Stumper
+              </h1>
+            </div>
+            <nav className="flex items-center gap-2">
+              <LoginButton />
+            </nav>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-6xl mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<ChallengeInterface />} />
             <Route path="/custom" element={<CustomTaskForm />} />
           </Routes>
-        </Box>
-      </Container>
+        </main>
+
+        {/* Academic Footer */}
+        <footer className="border-t border-slate-200 mt-auto">
+          <div className="max-w-6xl mx-auto px-4 py-6 text-center text-slate-500 text-sm">
+            <p>System Solver Protocol v2 • Optimal Control Theory</p>
+          </div>
+        </footer>
+      </div>
     </Router>
   );
 }
