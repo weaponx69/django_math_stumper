@@ -2,11 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # Django
 *.log
 *.pot
-*.pyc
 *.pyo
 *.pyd
 .local
@@ -25,4 +25,3 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
-*.pyc
