@@ -16,6 +16,17 @@ def index(request):
     return HttpResponseRedirect('http://localhost:3000')
 
 
+class UserView(View):
+    """API endpoint to get current user info"""
+    
+    def get(self, request):
+        """Return user authentication status"""
+        return JsonResponse({
+            'is_authenticated': request.user.is_authenticated,
+            'username': request.user.username if request.user.is_authenticated else None,
+        })
+
+
 class GenerateODETaskView(View):
     """API endpoint to generate a new ODE task"""
     
