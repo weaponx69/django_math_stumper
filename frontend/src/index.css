@@ -14,3 +14,29 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-in {
+  opacity: 0; /* Important to hide it before animation starts */
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.slide-in-from-bottom {
+  opacity: 0;
+  animation: slideUp 0.7s ease-out forwards;
+}
+
+.slide-in-from-bottom-4 {
+  opacity: 0;
+  animation: slideUp 0.7s ease-out forwards;
+}
