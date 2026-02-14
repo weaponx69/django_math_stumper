@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Box, Button, Typography, CircularProgress, Alert, Paper, TextField, Divider, Grid } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 // Simple MathJax wrapper with retry logic for loading stability
 const MathEquation = ({ latex }) => {
@@ -41,54 +39,114 @@ const MathEquation = ({ latex }) => {
 };
 
 const ChallengeInterface = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [task, setTask] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [solutionInput, setSolutionInput] = useState('');
     const [verificationResult, setVerificationResult] = useState(null);
-    const [showSolution, setShowSolution] = useState(false);
     const [solutionData, setSolutionData] = useState(null);
-    const [showRawLatex, setShowRawLatex] = useState(false);
-    const [showLatexSteps, setShowLatexSteps] = useState(false);
+    const [hasCalculated, setHasCalculated] = useState(false);
     const [copySuccess, setCopySuccess] = useState('');
 
-    const generateNewTask = async () => {
+    // Pre-filled rank-1 coefficient matrix
+    const [coefficients, setCoefficients] = useState([
+        [1, 1, 1, 1],
+        [1, 1, 1, 1],
+        [1, 1, 1, 1],
+        [1, 1, 1, 1]
+    ]);
+
+    // Editable initial conditions
+    const [initialConditions, setInitialConditions] = useState({
+        x0: 0.5, y0: 0.5, z0: 0.5, w0: 0.5
+    });
+
+    // Editable target time
+    const [targetTime, setTargetTime] = useState(1.0);
+
+    // Generate random task
+    const generateRandom = async () => {
         setLoading(true);
         setError(null);
-        setVerificationResult(null);
-        setShowSolution(false);
-        setSolutionData(null);
-        setShowLatexSteps(false);
         setSolutionInput('');
-        
+        setVerificationResult(null);
+        setSolutionData(null);
+        setHasCalculated(false);
+
         try {
             const response = await axios.get('/api/generate/');
-            setTask(response.data);
+            const taskData = response.data;
+
+            // Populate the editable fields with the generated values
+            if (taskData.coefficients && taskData.coefficients.linear) {
+                setCoefficients(taskData.coefficients.linear.map(row => [...row]));
+            }
+            if (taskData.initial_conditions) {
+                setInitialConditions({ ...taskData.initial_conditions });
+            }
+            if (taskData.target_time) {
+                setTargetTime(taskData.target_time);
+            }
         } catch (err) {
-            setError('Failed to generate task: ' + (err.response?.data?.error || err.message));
+            setError('Failed to generate: ' + (err.response?.data?.error || err.message));
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        if (location.state && location.state.task) {
-            setTask(location.state.task);
-            // Clear the state so it doesn't persist on refresh/re-nav
-            window.history.replaceState({}, document.title);
-        } else {
-            generateNewTask();
+    // Calculate - generates task AND fetches solution in one step
+    const calculate = async () => {
+        setLoading(true);
+        setError(null);
+        setSolutionInput('');
+        setVerificationResult(null);
+
+        // Parse coefficients to numbers
+        const parsedCoefficients = coefficients.map(row => 
+            row.map(val => {
+                const num = parseFloat(val);
+                return isNaN(num) ? 0 : num;
+            })
+        );
+
+        const parsedInitialConditions = {};
+        Object.keys(initialConditions).forEach(key => {
+            const num = parseFloat(initialConditions[key]);
+            parsedInitialConditions[key] = isNaN(num) ? 0 : num;
+        });
+
+        const payload = {
+            coefficients: {
+                linear: parsedCoefficients
+            },
+            initial_conditions: parsedInitialConditions,
+            target_time: parseFloat(targetTime) || 1.0
+        };
+
+        try {
+            // Create the task with custom coefficients
+            const response = await axios.post('/api/create_custom/', payload);
+            const taskData = response.data;
+
+            // Immediately fetch the solution
+            const solutionResponse = await axios.get(`/api/task/${taskData.task_id}/solution/`);
+            setSolutionData(solutionResponse.data);
+            setHasCalculated(true);
+        } catch (err) {
+            setError('Failed to calculate: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setLoading(false);
         }
-    }, [location.state]);
+    };
 
     const submitSolution = async () => {
-        if (!task || !solutionInput) return;
+        if (!solutionData || !solutionInput) return;
+        
+        // Get the task_id from solutionData
+        const taskId = solutionData.task_id || 1;
         
         try {
             const response = await axios.post('/api/verify/', {
-                task_id: task.task_id,
+                task_id: taskId,
                 solution: parseInt(solutionInput)
             });
             setVerificationResult(response.data);
@@ -97,76 +155,17 @@ const ChallengeInterface = () => {
         }
     };
 
-    const fetchSolution = async () => {
-        if (!task) return;
-        
-        if (showSolution) {
-            setShowSolution(false);
-            return;
-        }
-
-        try {
-            const response = await axios.get(`/api/task/${task.task_id}/solution/`);
-            setSolutionData(response.data);
-            setShowSolution(true);
-        } catch (err) {
-            setError('Failed to fetch solution: ' + (err.response?.data?.error || err.message));
-        }
+    const handleCoefficientChange = (row, col, value) => {
+        const newMatrix = [...coefficients.map(row => [...row])];
+        newMatrix[row][col] = value;
+        setCoefficients(newMatrix);
     };
 
-    const toggleLatexSteps = async () => {
-        if (!task) return;
-
-        if (showLatexSteps) {
-            setShowLatexSteps(false);
-            return;
-        }
-
-        if (!solutionData) {
-            try {
-                const response = await axios.get(`/api/task/${task.task_id}/solution/`);
-                setSolutionData(response.data);
-                setShowLatexSteps(true);
-            } catch (err) {
-                setError('Failed to fetch solution for steps: ' + (err.response?.data?.error || err.message));
-                return;
-            }
-        } else {
-            setShowLatexSteps(true);
-        }
+    const handleInitialConditionChange = (key, value) => {
+        setInitialConditions({ ...initialConditions, [key]: value });
     };
 
-    const generateFullLatex = (task) => {
-        if (!task) return '';
-        
-        // If we have the protocol derivation, show the whole thing
-        if (solutionData && solutionData.latex_solution) {
-            return Array.isArray(solutionData.latex_solution) 
-                ? solutionData.latex_solution.join('\n\n') 
-                : solutionData.latex_solution;
-        }
-
-        // Use the raw_latex already provided by the backend preview (optimized skeleton)
-        return task.equation_preview.raw_latex;
-    };
-
-    const handleCopyLatex = (task, type = 'full') => {
-        let text = '';
-        if (type === 'problem') {
-            text = task.equation_preview.raw_latex;
-        } else {
-            text = generateFullLatex(task);
-        }
-
-        navigator.clipboard.writeText(text).then(() => {
-            setCopySuccess(type === 'problem' ? '✅ Problem LaTeX Copied!' : '✅ Full Protocol Copied!');
-            setTimeout(() => setCopySuccess(''), 2000);
-        }, () => {
-            setCopySuccess('Failed to copy');
-        });
-    };
-
-    if (loading && !task) {
+    if (loading) {
         return (
             <div className="flex justify-center items-center min-h-[400px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
@@ -176,8 +175,9 @@ const ChallengeInterface = () => {
 
     return (
         <div className="space-y-6">
-            {/* Paper-style container */}
+            {/* Main Container */}
             <div className="bg-white rounded-lg shadow-md border border-slate-200 p-6">
+                {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h2 className="text-2xl font-bold text-slate-800">System Solver</h2>
@@ -185,288 +185,181 @@ const ChallengeInterface = () => {
                     </div>
                     <div className="flex gap-3">
                         <button 
-                            onClick={generateNewTask} 
+                            onClick={generateRandom} 
                             disabled={loading}
                             className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-700 disabled:opacity-50 transition-colors"
                         >
-                            {loading ? 'Generating...' : '🔄 Generate New'}
+                            {loading ? 'Loading...' : '🎲 Random'}
                         </button>
                         <button 
-                            onClick={() => navigate('/custom')}
-                            className="px-4 py-2 border-2 border-green-600 text-green-700 rounded-md hover:bg-green-50 transition-colors"
+                            onClick={calculate}
+                            disabled={loading}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors"
                         >
-                            ⚙️ Custom Task
+                            {loading ? 'Calculating...' : '✓ Calculate'}
                         </button>
                     </div>
                 </div>
 
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {/* Error Alert */}
+                {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-red-700 text-sm">{error}</p>
+                    </div>
+                )}
 
-                {task && (
-                    <Box>
-                        {/* 1. Dynamics & Objective Paper */}
-                        <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: '#f8f9fa', borderLeft: '4px solid #3498db' }}>
-                            <Typography variant="h6" gutterBottom>System Dynamics & Objective:</Typography>
-                            <Typography variant="body2" sx={{ mb: 2 }}>
-                                Calculate the exact integer scalar sum <MathEquation latex="\( \mathcal{S} = \sum u_i(t_f) \)" /> for the system below:
-                            </Typography>
-                            
-                            <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 1, mb: 2, width: '100%' }}>
-                                <MathEquation latex={`\\[ \\begin{aligned} & \\frac{dx}{dt} = ${task.equation_preview.dx_dt} \\\\ & \\frac{dy}{dt} = ${task.equation_preview.dy_dt} \\\\ & \\frac{dz}{dt} = ${task.equation_preview.dz_dt} \\\\ & \\frac{dw}{dt} = ${task.equation_preview.dw_dt} \\end{aligned} \\]`} />
-                            </Box>
+                {/* SECTION 1: INPUT */}
+                <div className="border border-slate-300 rounded-lg p-4 mb-6 bg-slate-50">
+                    <h3 className="text-lg font-semibold text-slate-800 mb-3">Input</h3>
+                    
+                    {/* Coefficient Matrix */}
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-slate-700 mb-2">Coefficient Matrix (4x4)</h4>
+                        <div className="space-y-2">
+                            {['dx/dt', 'dy/dt', 'dz/dt', 'dw/dt'].map((rowLabel, i) => (
+                                <div key={`row-${i}`} className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-slate-700 w-12">{rowLabel} =</span>
+                                    <div className="grid grid-cols-4 gap-2 flex-1">
+                                        {['x', 'y', 'z', 'w'].map((colLabel, j) => (
+                                            <input
+                                                key={`cell-${i}-${j}`}
+                                                type="number"
+                                                step="0.1"
+                                                value={coefficients[i][j]}
+                                                onChange={(e) => handleCoefficientChange(i, j, e.target.value)}
+                                                className="px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
-                            <Grid container spacing={2} sx={{ mb: 2 }}>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2">Initial State: <MathEquation latex={`\\\( [${task.initial_conditions.x0.toFixed(4)}, ${task.initial_conditions.y0.toFixed(4)}, ${task.initial_conditions.z0.toFixed(4)}, ${task.initial_conditions.w0.toFixed(4)}]^T \\\)`} /></Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2">Terminal Time: <MathEquation latex={`\\\( t_f = ${task.target_time.toFixed(6)} \\\)`} /></Typography>
-                                </Grid>
-                            </Grid>
-                            
-                            <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                                <Button 
-                                    size="small" 
-                                    variant="contained" 
-                                    color="secondary"
-                                    onClick={() => setShowRawLatex(!showRawLatex)}
+                    {/* Initial Conditions */}
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-slate-700 mb-2">Initial Conditions (t=0)</h4>
+                        <div className="grid grid-cols-4 gap-3">
+                            {['x0', 'y0', 'z0', 'w0'].map((key) => (
+                                <div key={key}>
+                                    <label className="block text-xs text-slate-600 mb-1">{key}</label>
+                                    <input 
+                                        type="number"
+                                        step="0.1"
+                                        value={initialConditions[key]}
+                                        onChange={(e) => handleInitialConditionChange(key, e.target.value)}
+                                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Target Time */}
+                    <div>
+                        <h4 className="text-sm font-medium text-slate-700 mb-2">Target Time</h4>
+                        <div className="max-w-32">
+                            <input 
+                                type="number"
+                                step="0.1"
+                                value={targetTime}
+                                onChange={(e) => setTargetTime(e.target.value)}
+                                className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* SECTION 2: SOLUTION */}
+                {hasCalculated && solutionData && (
+                    <div className="border border-purple-200 rounded-lg p-4 mb-6 bg-purple-50">
+                        <h3 className="text-lg font-semibold text-purple-800 mb-4">Solution</h3>
+                        
+                        {/* Numerical Results */}
+                        <div className="bg-slate-100 p-4 rounded-md mb-4">
+                            <p className="text-sm font-medium text-slate-700 mb-2">Final Evaluation State:</p>
+                            <ul className="list-disc list-inside text-sm text-slate-600 space-y-1 mb-3">
+                                <li>u₁ (x) = {solutionData.final_values[0].toFixed(8)}</li>
+                                <li>u₂ (y) = {solutionData.final_values[1].toFixed(8)}</li>
+                                <li>u₃ (z) = {solutionData.final_values[2].toFixed(8)}</li>
+                                <li>u₄ (w) = {solutionData.final_values[3].toFixed(8)}</li>
+                            </ul>
+                            <div className="p-3 bg-green-100 rounded-md border border-green-200">
+                                <p className="text-base font-bold text-green-700">
+                                    Scalar Sum (Σ uᵢ): {solutionData.recalculated_metrics.final_solution}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* LaTeX Steps */}
+                        <div className="bg-white border rounded p-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-sm font-semibold text-slate-700">Solution Steps</h4>
+                                <button 
+                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                    onClick={() => {
+                                        const fullText = Array.isArray(solutionData.latex_solution) 
+                                            ? solutionData.latex_solution.join('\n\n') 
+                                            : solutionData.latex_solution;
+                                        navigator.clipboard.writeText(fullText).then(() => {
+                                            setCopySuccess('✅ Copied!');
+                                            setTimeout(() => setCopySuccess(''), 2000);
+                                        });
+                                    }}
                                 >
-                                    {showRawLatex ? 'Hide Raw Segments' : '📋 SHOW RAW LATEX PROTOCOL'}
-                                </Button>
-                                <Button 
-                                    size="small" 
-                                    variant="outlined" 
-                                    color="primary"
-                                    onClick={() => handleCopyLatex(task, 'problem')}
-                                >
-                                    📋 Copy Problem LaTeX
-                                </Button>
-                                {copySuccess && (
-                                    <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', ml: 1, fontWeight: 'bold' }}>
-                                        {copySuccess}
-                                    </Typography>
-                                )}
-                            </Box>
-                            
-                            {showRawLatex && (
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography variant="subtitle2" sx={{ color: '#9c27b0', mb: 1 }}>Section 1: Full Problem Definition (LaTeX Source)</Typography>
-                                    {!solutionData ? (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#272822', color: '#f8f8f2', fontFamily: 'monospace', mb: 2, fontSize: '0.8rem' }}>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{generateFullLatex(task)}</pre>
-                                        </Paper>
-                                    ) : (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#272822', color: '#f8f8f2', fontFamily: 'monospace', mb: 2, fontSize: '0.8rem', position: 'relative' }}>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{generateFullLatex(task).split('\n\n')[0]}</pre>
-                                            <Button 
-                                                size="small" 
-                                                variant="contained" 
-                                                color="secondary"
-                                                sx={{ position: 'absolute', top: 5, right: 5, minWidth: '40px', py: 0, fontSize: '0.65rem' }}
-                                                onClick={() => {
-                                                    const text = generateFullLatex(task).split('\n\n')[0];
-                                                    navigator.clipboard.writeText(text).then(() => {
-                                                        setCopySuccess('✅ Problem Source Copied!');
-                                                        setTimeout(() => setCopySuccess(''), 2000);
-                                                    });
-                                                }}
-                                            >
-                                                Copy
-                                            </Button>
-                                        </Paper>
-                                    )}
-
-                                    <Typography variant="subtitle2" sx={{ color: '#9c27b0', mb: 1 }}>Section 1: Problem Definition (Decoupled Math & Text)</Typography>
-                                    {!solutionData ? (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f5f5f5', mb: 2 }}>
-                                            <Typography variant="body2" color="textSecondary">Solve the problem to see the decoupled problem definition.</Typography>
-                                        </Paper>
-                                    ) : (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white', mb: 2, overflowX: 'auto' }}>
-                                            <MathEquation latex={generateFullLatex(task).split('\n\n')[0]} />
-                                        </Paper>
-                                    )}
-
-                                    <Typography variant="subtitle2" sx={{ color: '#9c27b0', mb: 1 }}>Section 2: Full Analytical Protocol (Step-by-Step)</Typography>
-                                    {!solutionData ? (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#272822', color: '#f8f8f2', fontFamily: 'monospace', mb: 2, fontSize: '0.8rem' }}>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>% Solve the problem to generate the full protocol LaTeX source here.</pre>
-                                        </Paper>
-                                    ) : (
-                                        Array.isArray(solutionData.latex_solution) ? (
-                                            solutionData.latex_solution.slice(1).map((step, index) => (
-                                                <Box key={index} sx={{ mb: 2 }}>
-                                                    <Typography variant="caption" sx={{ color: '#aaa', display: 'block', mb: 0.5 }}>
-                                                        Step {index + 1}:
-                                                    </Typography>
-                                                    <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#272822', color: '#f8f8f2', fontFamily: 'monospace', fontSize: '0.75rem', overflowX: 'auto', position: 'relative' }}>
-                                                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{step}</pre>
-                                                        <Button 
-                                                            size="small" 
-                                                            variant="contained" 
-                                                            color="secondary"
-                                                            sx={{ position: 'absolute', top: 5, right: 5, minWidth: '40px', py: 0, fontSize: '0.65rem' }}
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(step).then(() => {
-                                                                    setCopySuccess(`✅ Step ${index + 1} Copied!`);
-                                                                    setTimeout(() => setCopySuccess(''), 2000);
-                                                                });
-                                                            }}
-                                                        >
-                                                            Copy
-                                                        </Button>
-                                                    </Paper>
-                                                </Box>
-                                            ))
-                                        ) : (
-                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#272822', color: '#f8f8f2', fontFamily: 'monospace', mb: 1, fontSize: '0.8rem' }}>
-                                                {solutionData.latex_solution}
-                                            </Paper>
-                                        )
-                                    )}
-                                    <Divider sx={{ my: 2, borderColor: '#484848' }} />
-                                    
-                                    <Typography variant="subtitle2" sx={{ color: '#9c27b0', mb: 1 }}>Section 3: Complete Protocol Source (Unified)</Typography>
-                                    {!solutionData ? (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#272822', color: '#f5f5f5', fontFamily: 'monospace', mb: 1, fontSize: '0.8rem' }}>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{generateFullLatex(task)}</pre>
-                                        </Paper>
-                                    ) : (
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#272822', color: '#f5f5f5', fontFamily: 'monospace', mb: 1, fontSize: '0.8rem', position: 'relative' }}>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', maxHeight: '300px', overflowY: 'auto' }}>{generateFullLatex(task)}</pre>
-                                            <Button 
-                                                size="small" 
-                                                variant="contained" 
-                                                color="secondary"
-                                                sx={{ position: 'absolute', top: 5, right: 5, fontSize: '0.65rem' }}
-                                                onClick={() => handleCopyLatex(task)}
-                                            >
-                                                Copy All
-                                            </Button>
-                                        </Paper>
-                                    )}
-
-                                </Box>
+                                    {copySuccess || '📋 Copy'}
+                                </button>
+                            </div>
+                            {solutionData.latex_solution ? (
+                                Array.isArray(solutionData.latex_solution) ? (
+                                    solutionData.latex_solution.map((step, idx) => (
+                                        <div key={idx} className="mb-4">
+                                            <MathEquation latex={step} />
+                                            {idx < solutionData.latex_solution.length - 1 && <hr className="my-3 border-dashed border-slate-300" />}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <MathEquation latex={solutionData.latex_solution} />
+                                )
+                            ) : (
+                                <p className="text-slate-500 text-sm">LaTeX Protocol derivation pending or unavailable.</p>
                             )}
-                        </Paper>
+                        </div>
+                    </div>
+                )}
 
-                        {/* 2. Action Buttons */}
-                        <Box display="flex" gap={2} mb={4} flexWrap="wrap">
-                            <Button 
-                                variant="contained" 
-                                onClick={generateNewTask} 
-                                disabled={loading}
-                                sx={{ minWidth: '160px' }}
-                            >
-                                {loading ? 'Generating...' : '🔄 Generate New'}
-                            </Button>
-                            <Button 
-                                variant="contained" 
-                                color="warning" 
-                                onClick={fetchSolution}
-                            >
-                                {showSolution ? 'Hide Solution' : '🔍 Show Solution'}
-                            </Button>
-                            <Button 
-                                variant="contained" 
-                                color="secondary" 
-                                onClick={toggleLatexSteps}
-                            >
-                                {showLatexSteps ? 'Hide Steps' : '📝 LaTeX Steps'}
-                            </Button>
-                        </Box>
-
-                        <Box display="flex" alignItems="center" gap={2} mb={4}>
-                            <TextField 
-                                label="Enter your solution (integer)" 
-                                type="number" 
+                {/* Answer Submission */}
+                {hasCalculated && solutionData && (
+                    <div className="border border-slate-300 rounded-lg p-4 bg-slate-50">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3">Submit Answer</h3>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <input 
+                                type="number"
+                                placeholder="Enter your solution (integer)"
                                 value={solutionInput}
                                 onChange={(e) => setSolutionInput(e.target.value)}
-                                sx={{ width: 300 }}
+                                className="px-4 py-2.5 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400 w-full sm:w-72"
                             />
-                            <Button variant="contained" color="primary" onClick={submitSolution} size="large">
+                            <button 
+                                className="px-6 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                                onClick={submitSolution}
+                            >
                                 ✅ Submit
-                            </Button>
-                        </Box>
+                            </button>
+                        </div>
 
+                        {/* Verification Result */}
                         {verificationResult && (
-                            <Alert severity={verificationResult.is_correct ? "success" : "error"} sx={{ mb: 3 }}>
-                                {verificationResult.is_correct 
-                                    ? `Correct! The solution is ${verificationResult.ground_truth}` 
-                                    : `Incorrect. Your answer: ${verificationResult.submitted_solution}, Correct answer: ${verificationResult.ground_truth}`
-                                }
-                            </Alert>
+                            <div className={`mt-4 p-4 rounded-md ${verificationResult.is_correct ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                <p className={verificationResult.is_correct ? 'text-green-700' : 'text-red-700'}>
+                                    {verificationResult.is_correct 
+                                        ? `Correct! The solution is ${verificationResult.ground_truth}` 
+                                        : `Incorrect. Your answer: ${verificationResult.submitted_solution}, Correct answer: ${verificationResult.ground_truth}`
+                                    }
+                                </p>
+                            </div>
                         )}
-
-                        {(showSolution || showLatexSteps) && solutionData && (
-                            <Paper sx={{ p: 3, mb: 3, bgcolor: '#fdfcfe', borderLeft: '4px solid #673ab7', boxShadow: 3 }}>
-                                <Typography variant="h5" color="primary" gutterBottom sx={{ fontWeight: 'bold' }}>
-                                    Full Analytical Solution
-                                </Typography>
-                                <Divider sx={{ mb: 2 }} />
-                                
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} md={6}>
-                                        <Typography variant="h6" gutterBottom>Numerical Results</Typography>
-                                        <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1 }}>
-                                            <Typography variant="subtitle2" gutterBottom>Final Evaluation State:</Typography>
-                                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                                                <li>u₁ (x) = {solutionData.final_values[0].toFixed(8)}</li>
-                                                <li>u₂ (y) = {solutionData.final_values[1].toFixed(8)}</li>
-                                                <li>u₃ (z) = {solutionData.final_values[2].toFixed(8)}</li>
-                                                <li>u₄ (w) = {solutionData.final_values[3].toFixed(8)}</li>
-                                            </ul>
-                                            <Box sx={{ mt: 2, p: 1.5, bgcolor: '#e8f5e9', borderRadius: 1, border: '1px solid #c8e6c9' }}>
-                                                <Typography variant="h6" color="success.main" sx={{ fontWeight: 'bold' }}>
-                                                    Scalar Sum (Σ uᵢ): {solutionData.recalculated_metrics.final_solution}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </Grid>
-                                    
-                                    <Grid item xs={12}>
-                                        <Typography variant="h6" gutterBottom>System Analysis Protocol</Typography>
-                                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white', overflowX: 'auto' }}>
-                                            {solutionData.latex_solution ? (
-                                                Array.isArray(solutionData.latex_solution) ? (
-                                                    solutionData.latex_solution.map((step, idx) => (
-                                                        <Box key={idx} sx={{ mb: 2 }}>
-                                                            <MathEquation latex={step} />
-                                                            {idx < solutionData.latex_solution.length - 1 && <Divider sx={{ my: 2, borderStyle: 'dashed' }} />}
-                                                        </Box>
-                                                    ))
-                                                ) : (
-                                                    <MathEquation latex={solutionData.latex_solution} />
-                                                )
-                                            ) : (
-                                                <Typography color="textSecondary">LaTeX Protocol derivation pending or unavailable.</Typography>
-                                            )}
-                                        </Paper>
-                                        
-                                        <Box mt={2}>
-                                            <Button 
-                                                size="small" 
-                                                variant="text" 
-                                                startIcon={<span>📋</span>}
-                                                onClick={() => {
-                                                    const fullText = Array.isArray(solutionData.latex_solution) 
-                                                        ? solutionData.latex_solution.join('\n\n') 
-                                                        : solutionData.latex_solution;
-                                                    navigator.clipboard.writeText(fullText).then(() => {
-                                                        setCopySuccess('✅ Protocol Copied!');
-                                                        setTimeout(() => setCopySuccess(''), 2000);
-                                                    });
-                                                }}
-                                            >
-                                                {copySuccess === '✅ Protocol Copied!' ? 'Copied!' : 'Copy Full Protocol LaTeX'}
-                                            </Button>
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-                            </Paper>
-                        )}
-
-                    </Box>
+                    </div>
                 )}
             </div>
         </div>

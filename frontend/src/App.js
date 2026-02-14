@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import ChallengeInterface from './components/ChallengeInterface';
-import CustomTaskForm from './components/CustomTaskForm';
 
 function LoginButton() {
   const navigate = useNavigate();
@@ -85,7 +84,6 @@ function App() {
         <main className="max-w-6xl mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<ChallengeInterface />} />
-            <Route path="/custom" element={<CustomTaskForm />} />
           </Routes>
         </main>
 
