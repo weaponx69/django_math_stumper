@@ -21,8 +21,8 @@ class ODEGenerator:
         
         # Generate two random vectors 'a' and 'r' with ranges that ensure
         # coefficients stay within [-0.5, 0.5] without needing scaling
-        a = np.array([random.uniform(-0.4, 0.4) for _ in range(4)])
-        r = np.array([random.uniform(-0.4, 0.4) for _ in range(4)])
+        a = np.array([random.randint(-1, 1) for _ in range(4)])
+        r = np.array([random.randint(-1, 1) for _ in range(4)])
 
         # Construct the rank-1 matrix A = a * r^T
         A = np.outer(a, r)
@@ -121,14 +121,14 @@ class ODEGenerator:
             
             # Generate random initial conditions
             initial_conditions = (
-                random.uniform(-1, 1),
-                random.uniform(-1, 1),
-                random.uniform(-1, 1),
-                random.uniform(-1, 1)
+                random.randint(-1, 1),
+                random.randint(-1, 1),
+                random.randint(-1, 1),
+                random.randint(-1, 1)
             )
             
             # Generate random target time
-            target_time = random.uniform(0.1, 2.0)
+            target_time = random.randint(1, 2)
             
             # Try to solve the system
             solution = self._solve_system(coefficients, initial_conditions, target_time)

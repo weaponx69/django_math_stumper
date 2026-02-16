@@ -127,8 +127,8 @@ def demonstrate_current_generation():
     random.seed(42)
     
     # Rank-one matrix A = a * r^T
-    r = [random.uniform(-1.0, 1.0) for _ in range(4)]
-    a = [random.uniform(-1.5, 1.5) for _ in range(4)]
+    r = [random.randint(-1, 1) for _ in range(4)]
+    a = [random.randint(-1, 1) for _ in range(4)]
     
     # Ensure sum(a) isn't zero
     if abs(sum(a)) < 0.1:

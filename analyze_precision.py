@@ -82,8 +82,8 @@ def analyze_current_generation_precision():
     random.seed(42)
     
     # Generate using current method
-    r = [random.uniform(-1.0, 1.0) for _ in range(4)]
-    a = [random.uniform(-1.5, 1.5) for _ in range(4)]
+    r = [random.randint(-1, 1) for _ in range(4)]
+    a = [random.randint(-1, 1) for _ in range(4)]
     
     if abs(sum(a)) < 0.1:
         a[0] += 0.5
