@@ -86,6 +86,7 @@ DATABASES = {
         'PASSWORD': config('POSTGRES_PASSWORD', default='math_password'),
         'HOST': config('POSTGRES_HOST', default='db'),
         'PORT': config('POSTGRES_PORT', default='5432'),
+        'CONN_MAX_AGE': 60,  # Persistent connection for 60s to reduce Docker networking overhead
     }
 }
 
