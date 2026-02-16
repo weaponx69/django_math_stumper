@@ -165,8 +165,8 @@ const ChallengeInterface = () => {
             {/* Header Section within Content */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">System Solver</h1>
-                    <p className="text-sm text-slate-500 font-medium tracking-wide mt-1">PROTOCOL v2 • OPTIMAL CONTROL</p>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">System-Solver</h1>
+                    <p className="text-sm text-slate-500 font-medium tracking-wide mt-1">PROTOCOL v2</p>
                 </div>
                 <div className="flex gap-3">
                         <button 
