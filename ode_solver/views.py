@@ -31,54 +31,75 @@ class GenerateODETaskView(View):
     """API endpoint to generate a new ODE task"""
     
     def get(self, request):
-        print("DEBUG: GenerateODETaskView.get started") # Added for debugging
-        generator = ODEGenerator()
+        import traceback
+        print("=" * 60)
+        print("DEBUG: GenerateODETaskView.get started") 
+        print("=" * 60)
         
-        # Generate a valid ODE task
-        task_data = generator.generate_valid_ode_task()
-        
-        if not task_data:
-            print("DEBUG: GenerateODETaskView.get - could not generate valid ODE task") # Added for debugging
-            return JsonResponse({'error': 'Could not generate a valid ODE task'}, status=500)
-        
-        # Create database record
-        ode_task = ODETask.objects.create(
-            coefficients=task_data['coefficients'],
-            x0=task_data['initial_conditions']['x0'],
-            y0=task_data['initial_conditions']['y0'],
-            z0=task_data['initial_conditions']['z0'],
-            w0=task_data['initial_conditions']['w0'],
-            target_time=task_data['target_time'],
-            x_final=task_data['solution']['final_values'][0],
-            y_final=task_data['solution']['final_values'][1],
-            z_final=task_data['solution']['final_values'][2],
-            w_final=task_data['solution']['final_values'][3],
-            weighted_sum=task_data['solution']['weighted_sum'],
-            arc_length=task_data['solution']['arc_length'],
-            curvature=task_data['solution']['curvature'],
-            final_solution=task_data['solution']['final_solution'],
-            is_valid=True
-        )
-        
-        # Return task details (without the solution for challenge)
-        response_data = {
-            'task_id': ode_task.pk,
-            'coefficients': ode_task.get_coefficients_dict(),
-            'initial_conditions': {
-                'x0': float(ode_task.x0),
-                'y0': float(ode_task.y0),
-                'z0': float(ode_task.z0),
-                'w0': float(ode_task.w0),
-            },
-            'target_time': float(ode_task.target_time),
-            'equation_preview': self.get_equation_preview(
-                ode_task.get_coefficients_dict(), 
-                ode_task.target_time,
-                (float(ode_task.x0), float(ode_task.y0), float(ode_task.z0), float(ode_task.w0))
+        try:
+            generator = ODEGenerator()
+            print("DEBUG: ODEGenerator created")
+            
+            # Generate a valid ODE task
+            print("DEBUG: Calling generate_valid_ode_task()...")
+            task_data = generator.generate_valid_ode_task()
+            print("DEBUG: generate_valid_ode_task returned:", task_data is not None)
+            
+            if not task_data:
+                print("DEBUG: GenerateODETaskView.get - could not generate valid ODE task")
+                return JsonResponse({'error': 'Could not generate a valid ODE task'}, status=500)
+            
+            print("DEBUG: Task data generated successfully, creating database record...")
+            
+            # Create database record
+            ode_task = ODETask.objects.create(
+                coefficients=task_data['coefficients'],
+                x0=task_data['initial_conditions']['x0'],
+                y0=task_data['initial_conditions']['y0'],
+                z0=task_data['initial_conditions']['z0'],
+                w0=task_data['initial_conditions']['w0'],
+                target_time=task_data['target_time'],
+                x_final=task_data['solution']['final_values'][0],
+                y_final=task_data['solution']['final_values'][1],
+                z_final=task_data['solution']['final_values'][2],
+                w_final=task_data['solution']['final_values'][3],
+                weighted_sum=task_data['solution']['weighted_sum'],
+                arc_length=task_data['solution']['arc_length'],
+                curvature=task_data['solution']['curvature'],
+                final_solution=task_data['solution']['final_solution'],
+                is_valid=True
             )
-        }
-        
-        return JsonResponse(response_data)
+            
+            print("DEBUG: Database record created with ID:", ode_task.pk)
+            
+            # Return task details (without the solution for challenge)
+            response_data = {
+                'task_id': ode_task.pk,
+                'coefficients': ode_task.get_coefficients_dict(),
+                'initial_conditions': {
+                    'x0': float(ode_task.x0),
+                    'y0': float(ode_task.y0),
+                    'z0': float(ode_task.z0),
+                    'w0': float(ode_task.w0),
+                },
+                'target_time': float(ode_task.target_time),
+                'equation_preview': self.get_equation_preview(
+                    ode_task.get_coefficients_dict(), 
+                    ode_task.target_time,
+                    (float(ode_task.x0), float(ode_task.y0), float(ode_task.z0), float(ode_task.w0))
+                )
+            }
+            
+            print("DEBUG: Response prepared, returning JSON")
+            return JsonResponse(response_data)
+            
+        except Exception as e:
+            print("=" * 60)
+            print("DEBUG: GenerateODETaskView.get EXCEPTION")
+            print("ERROR:", str(e))
+            print(traceback.format_exc())
+            print("=" * 60)
+            return JsonResponse({'error': str(e)}, status=500)
     
     def get_equation_preview(self, coefficients, target_time=None, initial_conditions=None):
         """Generate a LaTeX representation of the ODE system"""

@@ -3,16 +3,16 @@ services:
   db:
     image: postgres:15-alpine
     container_name: math_stumper_db
-    network_mode: "host"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-math_stumper}
       POSTGRES_USER: ${POSTGRES_USER:-math_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-math_password_123}
-    command: ["postgres", "-p", "5434"] # Force it to listen on 5434
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p 5434 -U ${POSTGRES_USER:-math_user} -d ${POSTGRES_DB:-math_stumper}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-math_user} -d ${POSTGRES_DB:-math_stumper}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,18 +22,19 @@ services:
   django:
     build: .
     container_name: math_stumper_api
-    network_mode: "host"
     command: gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 300 --access-logfile - django_math_stumper.wsgi:application
     volumes:
       - .:/app
+    ports:
+      - "8000:8000"
     environment:
       - DEBUG=True
       - SECRET_KEY=django-insecure-debug-key
       - POSTGRES_DB=math_stumper
       - POSTGRES_USER=math_user
       - POSTGRES_PASSWORD=math_password_123
-      - POSTGRES_HOST=localhost
-      - POSTGRES_PORT=5434
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
       - ALLOWED_HOSTS=*
       - CORS_ALLOW_ALL_ORIGINS=True
     depends_on:
@@ -45,9 +46,8 @@ services:
   frontend:
     build: ./frontend
     container_name: math_stumper_ui
-    network_mode: "host" # Shares host network, ignores ports directive
-    volumes:
-      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "3000:80"
     depends_on:
       - django
     restart: unless-stopped

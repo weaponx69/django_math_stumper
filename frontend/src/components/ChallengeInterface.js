@@ -68,11 +68,15 @@ const ChallengeInterface = () => {
         setSolutionData(null);
         setHasCalculated(false);
 
-        console.log(">>> generateRandom CALLED <<<");
+        console.log(">>> generateRandom: Starting request to /api/generate/ <<<");
+        console.time("generateRandom duration");
 
         try {
+            console.log(">>> generateRandom: Sending GET request... <<<");
             const response = await axios.get('/api/generate/');
+            console.log(">>> generateRandom: Received response <<<", response.status, response.statusText);
             const taskData = response.data;
+            console.log(">>> generateRandom: Task data received:", taskData);
 
             if (taskData.coefficients && taskData.coefficients.linear) {
                 setCoefficients(taskData.coefficients.linear.map(row => [...row]));
@@ -84,8 +88,17 @@ const ChallengeInterface = () => {
                 setTargetTime(taskData.target_time);
             }
         } catch (err) {
+            console.error(">>> generateRandom: ERROR <<<", err);
+            console.error(">>> generateRandom: Error response:", err.response);
+            console.error(">>> generateRandom: Error message:", err.message);
+            console.error(">>> generateRandom: Error name:", err.name);
+            if (err.request) {
+                console.error(">>> generateRandom: No response received - request object:", err.request);
+            }
             setError('Failed to generate: ' + (err.response?.data?.error || err.message));
         } finally {
+            console.log(">>> generateRandom: Finished (loading=false) <<<");
+            console.timeEnd("generateRandom duration");
             setLoading(false);
         }
     };
