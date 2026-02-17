@@ -10,9 +10,11 @@ function LoginButton() {
     checkAuth();
   }, []);
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/user/', {
+      const response = await fetch(`${API_URL}/api/user/`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -26,7 +28,7 @@ function LoginButton() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:8000/accounts/logout/', {
+      await fetch(`${API_URL}/accounts/logout/`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -36,6 +38,7 @@ function LoginButton() {
       console.error('Logout failed:', error);
     }
   };
+
 
   if (isLoggedIn) {
     return (
@@ -50,13 +53,14 @@ function LoginButton() {
 
   return (
     <button 
-      onClick={() => window.location.href = 'http://localhost:8000/accounts/login/'}
+      onClick={() => window.location.href = `${API_URL}/accounts/login/`}
       className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all duration-300 hover:scale-105 active:scale-95"
     >
       Sign In
     </button>
   );
 }
+
 
 function App() {
   return (

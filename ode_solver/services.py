@@ -366,3 +366,233 @@ def format_latex_solution(coefficients: Dict[str, List[List[float]]],
     ))
 
     return "\n\n".join(all_steps)
+
+
+def extract_numerical_values(latex_solution: str) -> dict:
+    """
+    Extract numerical values from a LaTeX solution string.
+    
+    This function parses the LaTeX solution to extract:
+    - x_final, y_final, z_final, w_final (final state values)
+    - weighted_sum (S = xf + 2*yf + 3*zf + 4*wf)
+    - arc_length
+    - curvature
+    - final_solution (integer)
+    
+    Args:
+        latex_solution: The LaTeX solution string
+        
+    Returns:
+        Dictionary with extracted numerical values
+    """
+    import re
+    from decimal import Decimal
+    
+    extracted = {}
+    
+    if not latex_solution:
+        return extracted
+    
+    # Extract final solution (the integer answer)
+    # Looking for patterns like "The final solution is: 123" or "Answer" sections
+    final_solution_patterns = [
+        r'The final solution is:\s*(\d+)',
+        r'\\text\{The final solution is:\}\s*(\d+)',
+        r'\$\$?\s*\\mathcal\{L\}\s*=\s*(\d+)',
+        r'final solution[:\s]+(\d+)',
+        r'\$\$?\s*(\d{1,3})\s*\$\$?',  # Match 1-3 digit numbers in math mode
+    ]
+    
+    for pattern in final_solution_patterns:
+        match = re.search(pattern, latex_solution)
+        if match:
+            try:
+                extracted['final_solution'] = int(match.group(1))
+                break
+            except (ValueError, IndexError):
+                continue
+    
+    # Extract final state values from pmatrix patterns
+    # Looking for patterns like: \begin{pmatrix} 0.123456 \\ 0.234567 \\ ...
+    pmatrix_pattern = r'\\begin\{pmatrix\}([\s\d.\-+eE\\]+)\\end\{pmatrix\}'
+    pmatrix_matches = re.findall(pmatrix_pattern, latex_solution)
+    
+    for match in pmatrix_matches:
+        # Split by \\ and clean up
+        values_str = match.replace('\\\\', '\\').replace('\\', ' ').split()
+        try:
+            float_values = [float(v) for v in values_str if v]
+            # Check if this looks like 4 state values
+            if len(float_values) >= 4:
+                extracted['x_final'] = Decimal(str(float_values[0]))
+                extracted['y_final'] = Decimal(str(float_values[1]))
+                extracted['z_final'] = Decimal(str(float_values[2]))
+                extracted['w_final'] = Decimal(str(float_values[3]))
+                break
+        except (ValueError, IndexError):
+            continue
+    
+    # Extract weighted sum S = x_f + 2*y_f + 3*z_f + 4*w_f
+    weighted_sum_patterns = [
+        r'S\s*=\s*([-+]?\d+\.?\d*)',
+        r'weighted sum[:\s=]+([-+]?\d+\.?\d*)',
+        r'\$\$?\s*S\s*=\s*([-+]?\d+\.?\d*)\s*\$\$?',
+    ]
+    
+    for pattern in weighted_sum_patterns:
+        match = re.search(pattern, latex_solution, re.IGNORECASE)
+        if match:
+            try:
+                extracted['weighted_sum'] = Decimal(match.group(1))
+                break
+            except (ValueError, IndexError):
+                continue
+    
+    # Extract arc length (L)
+    arc_length_patterns = [
+        r'L\s*=\s*([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)',
+        r'arc length[:\s=]+([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)',
+        r'\$\$?\s*L\s*=\s*([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)\s*\$\$?',
+    ]
+    
+    for pattern in arc_length_patterns:
+        match = re.search(pattern, latex_solution, re.IGNORECASE)
+        if match:
+            try:
+                extracted['arc_length'] = Decimal(match.group(1))
+                break
+            except (ValueError, IndexError):
+                continue
+    
+    # Extract curvature (κ or kappa)
+    curvature_patterns = [
+        r'\\kappa\s*=\s*([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)',
+        r'curvature[:\s=]+([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)',
+        r'\$\$?\s*\\kappa\s*=\s*([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)\s*\$\$?',
+    ]
+    
+    for pattern in curvature_patterns:
+        match = re.search(pattern, latex_solution, re.IGNORECASE)
+        if match:
+            try:
+                extracted['curvature'] = Decimal(match.group(1))
+                break
+            except (ValueError, IndexError):
+                continue
+    
+    # If we have the final values, calculate weighted_sum if not found
+    if 'x_final' in extracted and 'weighted_sum' not in extracted:
+        try:
+            ws = (
+                extracted['x_final'] + 
+                2 * extracted['y_final'] + 
+                3 * extracted['z_final'] + 
+                4 * extracted['w_final']
+            )
+            extracted['weighted_sum'] = ws
+        except (TypeError, ValueError):
+            pass
+    
+    # If we have weighted_sum and arc_length, calculate final_solution if not found
+    if 'final_solution' not in extracted:
+        if 'weighted_sum' in extracted and 'arc_length' in extracted:
+            try:
+                ws = float(extracted['weighted_sum'])
+                al = float(extracted['arc_length'])
+                curv = float(extracted.get('curvature', Decimal('0')))
+                raw = abs(ws) + al + curv * 1000
+                extracted['final_solution'] = int(round(raw)) % 1000
+            except (TypeError, ValueError):
+                pass
+    
+    return extracted
+
+
+def validate_latex_solution(latex_solution: str) -> dict:
+    """
+    Validate that a LaTeX solution follows required formatting rules.
+    
+    This function checks:
+    - Required sections are present (Step 1-6, Answer)
+    - LaTeX syntax is valid
+    - Mathematical content is present
+    
+    Args:
+        latex_solution: The LaTeX solution string to validate
+        
+    Returns:
+        Dictionary with validation results:
+        - is_valid: bool
+        - errors: list of error messages
+        - warnings: list of warning messages
+    """
+    import re
+    
+    result = {
+        'is_valid': True,
+        'errors': [],
+        'warnings': []
+    }
+    
+    if not latex_solution:
+        result['is_valid'] = False
+        result['errors'].append('Empty LaTeX solution')
+        return result
+    
+    # Check for required sections
+    required_sections = [
+        'Step 1',
+        'Step 2', 
+        'Step 3',
+        'Step 4',
+        'Step 5',
+        'Step 6',
+        'Answer'
+    ]
+    
+    for section in required_sections:
+        if section not in latex_solution:
+            result['warnings'].append(f'Missing section: {section}')
+    
+    # Check for LaTeX math environments
+    has_aligned = r'\begin{aligned}' in latex_solution or r'\begin{align}' in latex_solution
+    has_pmatrix = r'\begin{pmatrix}' in latex_solution
+    has_equation = r'\begin{equation}' in latex_solution or '$$' in latex_solution
+
+    
+    if not (has_aligned or has_pmatrix or has_equation):
+        result['warnings'].append('No mathematical equations detected')
+    
+    # Check for common LaTeX errors
+    
+    # Unmatched braces
+    open_braces = latex_solution.count('{')
+    close_braces = latex_solution.count('}')
+    if open_braces != close_braces:
+        result['is_valid'] = False
+        result['errors'].append(f'Unmatched braces: {open_braces} open, {close_braces} close')
+    
+    # Unmatched parentheses (rough check)
+    open_parens = latex_solution.count('(')
+    close_parens = latex_solution.count(')')
+    if open_parens != close_parens:
+        result['warnings'].append(f'Unmatched parentheses: {open_parens} open, {close_parens} close')
+    
+    # Check for required mathematical elements
+    if 'mathbf' not in latex_solution and 'mathbf' not in latex_solution:
+        result['warnings'].append('No bold math formatting detected (expected \\mathbf)')
+    
+    # Check for final solution value
+    if 'final solution' not in latex_solution.lower():
+        result['warnings'].append('No final solution mentioned')
+    
+    # Validate pmatrix structure if present
+    if has_pmatrix:
+        pmatrix_opens = latex_solution.count(r'\begin{pmatrix}')
+        pmatrix_closes = latex_solution.count(r'\end{pmatrix}')
+        if pmatrix_opens != pmatrix_closes:
+            result['is_valid'] = False
+            result['errors'].append('Unmatched pmatrix environments')
+    
+    return result
+

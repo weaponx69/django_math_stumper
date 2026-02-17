@@ -285,6 +285,47 @@ class TaskDetailView(View):
             return JsonResponse({'error': 'Task not found'}, status=404)
 
 
+class ProblemListView(View):
+    """API endpoint to list all ODE tasks (problems)"""
+    
+    def get(self, request):
+        """Get list of all ODE tasks"""
+        try:
+            # Get all tasks, ordered by most recent
+            tasks = ODETask.objects.all().order_by('-created_at')[:50]  # Limit to 50 most recent
+            
+            # Format response to match what ProblemList.js expects
+            problems = []
+            for task in tasks:
+                # Generate a "question" from the equation preview
+                preview = GenerateODETaskView().get_equation_preview(
+                    task.get_coefficients_dict(),
+                    task.target_time,
+                    (float(task.x0), float(task.y0), float(task.z0), float(task.w0))
+                )
+                
+                problems.append({
+                    'id': task.pk,
+                    'task_id': task.pk,
+                    'question': f"Solve the ODE system with target time t_f = {float(task.target_time)}",
+                    'answer': task.final_solution,
+                    'created_at': task.created_at.isoformat(),
+                    'target_time': float(task.target_time),
+                    'initial_conditions': {
+                        'x0': float(task.x0),
+                        'y0': float(task.y0),
+                        'z0': float(task.z0),
+                        'w0': float(task.w0),
+                    },
+                    'equation_preview': preview
+                })
+            
+            return JsonResponse({'problems': problems})
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
 class TaskSolutionView(View):
     """API endpoint to get detailed solution for a specific task"""
     

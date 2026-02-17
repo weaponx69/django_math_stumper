@@ -14,7 +14,7 @@ const ProblemList = () => {
     setError(null);
     try {
       const response = await axios.get('/api/problems/');
-      setProblems(response.data);
+      setProblems(response.data.problems || []);
     } catch (err) {
       setError('Failed to fetch problems');
       console.error('Error fetching problems:', err);
@@ -31,8 +31,20 @@ const ProblemList = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('/api/generate/');
-      setProblems(prev => [response.data, ...prev]);
+      const response = await axios.get('/api/generate/');
+      const taskData = response.data;
+      // Transform to match the expected format
+      const newProblem = {
+        id: taskData.task_id,
+        task_id: taskData.task_id,
+        question: `Solve the ODE system with target time t_f = ${taskData.target_time}`,
+        answer: null, // Will be revealed when solution is available
+        created_at: new Date().toISOString(),
+        target_time: taskData.target_time,
+        initial_conditions: taskData.initial_conditions,
+        equation_preview: taskData.equation_preview
+      };
+      setProblems(prev => [newProblem, ...prev]);
     } catch (err) {
       setError('Failed to generate new problem');
       console.error('Error generating problem:', err);
@@ -40,6 +52,8 @@ const ProblemList = () => {
       setLoading(false);
     }
   };
+
+
 
   if (loading && problems.length === 0) {
     return (
