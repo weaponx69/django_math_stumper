@@ -68,6 +68,8 @@ const ChallengeInterface = () => {
         setSolutionData(null);
         setHasCalculated(false);
 
+        console.log(">>> generateRandom CALLED <<<");
+
         try {
             const response = await axios.get('/api/generate/');
             const taskData = response.data;
@@ -93,6 +95,8 @@ const ChallengeInterface = () => {
         setError(null);
         setSolutionInput('');
         setVerificationResult(null);
+
+        console.log(">>> calculate CALLED <<<");
 
         const parsedCoefficients = coefficients.map(row => 
             row.map(val => {

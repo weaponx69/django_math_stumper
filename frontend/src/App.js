@@ -117,7 +117,7 @@ function App() {
             </div>
             <div className="text-center">
               <p className="text-slate-400 text-xs font-medium">System Solver Protocol &bull; 2026</p>
-              <p className="text-slate-600 text-[10px] mt-1">Computational Engine: SymPy + DRF</p>
+              <p className="text-slate-600 text-[10px] mt-1">Computational Engine: DRF</p>
             </div>
           </div>
         </footer>
