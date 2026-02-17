@@ -3,11 +3,21 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.conf import settings
 import json
 import decimal
 from decimal import Decimal
 from .models import ODETask
 from .services import ODEGenerator, format_latex_solution, format_equation_latex
+import openai
+
+
+def get_openai_client():
+    """Get OpenAI client with API key from settings"""
+    api_key = getattr(settings, 'OPENAI_API_KEY', None)
+    if not api_key or api_key == 'your-openai-api-key-here':
+        return None
+    return openai.OpenAI(api_key=api_key)
 
 
 def index(request):
@@ -450,3 +460,194 @@ class TaskSolutionView(View):
             return int(round(scalar_sum))
         except Exception:
             return 0
+
+
+class AIExplanationView(View):
+    """API endpoint to get AI-generated explanations for ODE tasks using OpenAI"""
+    
+    def get(self, request, task_id):
+        """Generate an AI explanation for a specific ODE task"""
+        client = get_openai_client()
+        
+        if not client:
+            return JsonResponse({
+                'error': 'OpenAI API key not configured. Please set OPENAI_API_KEY in .env file.',
+                'configured': False
+            }, status=503)
+        
+        try:
+            # Get the ODE task
+            try:
+                ode_task = ODETask.objects.get(pk=task_id)
+            except ODETask.DoesNotExist:
+                return JsonResponse({'error': 'Task not found'}, status=404)
+            
+            # Get task details
+            coefficients = ode_task.get_coefficients_dict()
+            initial_conditions = {
+                'x0': float(ode_task.x0),
+                'y0': float(ode_task.y0),
+                'z0': float(ode_task.z0),
+                'w0': float(ode_task.w0)
+            }
+            target_time = float(ode_task.target_time)
+            final_values = [
+                float(ode_task.x_final) if ode_task.x_final else float(ode_task.x0),
+                float(ode_task.y_final) if ode_task.y_final else float(ode_task.y0),
+                float(ode_task.z_final) if ode_task.z_final else float(ode_task.z0),
+                float(ode_task.w_final) if ode_task.w_final else float(ode_task.w0)
+            ]
+            
+            # Build the prompt
+            prompt = self._build_explanation_prompt(
+                coefficients, initial_conditions, target_time, final_values
+            )
+            
+            # Call OpenAI API
+            model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert mathematics tutor specializing in differential equations. Explain concepts clearly with step-by-step reasoning. Use LaTeX formatting for mathematical expressions when helpful."
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=1500
+            )
+            
+            ai_explanation = response.choices[0].message.content
+            
+            return JsonResponse({
+                'task_id': task_id,
+                'explanation': ai_explanation,
+                'model_used': model,
+                'success': True
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': f'Failed to generate explanation: {str(e)}',
+                'success': False
+            }, status=500)
+    
+    def _build_explanation_prompt(self, coefficients, initial_conditions, target_time, final_values):
+        """Build a detailed prompt for the AI"""
+        linear = coefficients.get('linear', [])
+        
+        prompt = f"""Please explain how to solve this system of linear differential equations:
+
+The system is: dU/dt = A*U where U = [x, y, z, w]^T
+
+Coefficient matrix A:
+{linear[0][0]:.4f} {linear[0][1]:.4f} {linear[0][2]:.4f} {linear[0][3]:.4f}
+{linear[1][0]:.4f} {linear[1][1]:.4f} {linear[1][2]:.4f} {linear[1][3]:.4f}
+{linear[2][0]:.4f} {linear[2][1]:.4f} {linear[2][2]:.4f} {linear[2][3]:.4f}
+{linear[3][0]:.4f} {linear[3][1]:.4f} {linear[3][2]:.4f} {linear[3][3]:.4f}
+
+Initial conditions at t=0:
+x(0) = {initial_conditions['x0']}
+y(0) = {initial_conditions['y0']}
+z(0) = {initial_conditions['z0']}
+w(0) = {initial_conditions['w0']}
+
+Target time: t = {target_time}
+
+The numerical solution at t={target_time} is:
+x({target_time}) = {final_values[0]:.6f}
+y({target_time}) = {final_values[1]:.6f}
+z({target_time}) = {final_values[2]:.6f}
+w({target_time}) = {final_values[3]:.6f}
+
+Please provide:
+1. A brief explanation of the matrix properties (is it diagonalizable? what are the eigenvalues?)
+2. The analytical solution method
+3. How the numerical solution was computed
+4. What the final values tell us about the system's behavior
+
+Keep your explanation educational and accessible for someone learning differential equations."""
+        
+        return prompt
+
+
+class AIHintView(View):
+    """API endpoint to get AI-generated hints for ODE tasks"""
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def post(self, request):
+        """Generate a hint for an ODE task based on user's progress"""
+        client = get_openai_client()
+        
+        if not client:
+            return JsonResponse({
+                'error': 'OpenAI API key not configured.',
+                'configured': False
+            }, status=503)
+        
+        try:
+            data = json.loads(request.body)
+            task_id = data.get('task_id')
+            user_question = data.get('question', '')
+            
+            # Get the task
+            try:
+                ode_task = ODETask.objects.get(pk=task_id)
+            except ODETask.DoesNotExist:
+                return JsonResponse({'error': 'Task not found'}, status=404)
+            
+            coefficients = ode_task.get_coefficients_dict()
+            target_time = float(ode_task.target_time)
+            
+            # Build hint prompt
+            prompt = f"""The user is working on solving this ODE system:
+
+dx/dt = {coefficients['linear'][0][0]:.2f}x + {coefficients['linear'][0][1]:.2f}y + {coefficients['linear'][0][2]:.2f}z + {coefficients['linear'][0][3]:.2f}w
+dy/dt = {coefficients['linear'][1][0]:.2f}x + {coefficients['linear'][1][1]:.2f}y + {coefficients['linear'][1][2]:.2f}z + {coefficients['linear'][1][3]:.2f}w
+dz/dt = {coefficients['linear'][2][0]:.2f}x + {coefficients['linear'][2][1]:.2f}y + {coefficients['linear'][2][2]:.2f}z + {coefficients['linear'][2][3]:.2f}w
+dw/dt = {coefficients['linear'][3][0]:.2f}x + {coefficients['linear'][3][1]:.2f}y + {coefficients['linear'][3][2]:.2f}z + {coefficients['linear'][3][3]:.2f}w
+
+Target time: t = {target_time}
+
+The user asks: "{user_question}"
+
+Provide a helpful hint (2-3 sentences max) that guides them without giving away the full solution. Be encouraging and specific."""
+            
+            model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful math tutor. Give concise, encouraging hints."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=200
+            )
+            
+            hint = response.choices[0].message.content
+            
+            return JsonResponse({
+                'hint': hint,
+                'success': True
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'success': False
+            }, status=500)

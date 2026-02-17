@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import DesmosGraph from './DesmosGraph';
 
 // Simple MathJax wrapper with retry logic for loading stability
 const MathEquation = ({ latex }) => {
@@ -351,39 +352,51 @@ const ChallengeInterface = () => {
 
                     <div className="grid lg:grid-cols-3 gap-8">
                         {/* Derivation Steps */}
-                        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
-                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="font-semibold text-slate-800">Mathematical Derivation</h3>
-                                <button 
-                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
-                                    onClick={() => {
-                                        const fullText = Array.isArray(solutionData.latex_solution) 
-                                            ? solutionData.latex_solution.join('\n\n') 
-                                            : solutionData.latex_solution;
-                                        navigator.clipboard.writeText(fullText).then(() => {
-                                            setCopySuccess('Copied!');
-                                            setTimeout(() => setCopySuccess(''), 2000);
-                                        });
-                                    }}
-                                >
-                                    {copySuccess || 'Copy LaTeX'}
-                                </button>
-                            </div>
-                            <div className="p-6 max-h-[600px] overflow-y-auto custom-scrollbar">
-                                {solutionData.latex_solution ? (
-                                    <div className="space-y-8">
-                                        {(Array.isArray(solutionData.latex_solution) ? solutionData.latex_solution : [solutionData.latex_solution]).map((step, idx) => (
-                                            <div key={idx} className="relative pl-6 border-l-2 border-indigo-100">
-                                                <span className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-2 border-indigo-200"></span>
-                                                <MathEquation latex={step} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12 text-slate-400">
-                                        No derivation available.
-                                    </div>
-                                )}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Desmos Graph Visualization */}
+                            <DesmosGraph 
+                                coefficients={coefficients}
+                                initialConditions={initialConditions}
+                                targetTime={targetTime}
+                                solutionData={solutionData}
+                                show={hasCalculated}
+                            />
+                            
+                            {/* Mathematical Derivation */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                    <h3 className="font-semibold text-slate-800">Mathematical Derivation</h3>
+                                    <button 
+                                        className="text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
+                                        onClick={() => {
+                                            const fullText = Array.isArray(solutionData.latex_solution) 
+                                                ? solutionData.latex_solution.join('\n\n') 
+                                                : solutionData.latex_solution;
+                                            navigator.clipboard.writeText(fullText).then(() => {
+                                                setCopySuccess('Copied!');
+                                                setTimeout(() => setCopySuccess(''), 2000);
+                                            });
+                                        }}
+                                    >
+                                        {copySuccess || 'Copy LaTeX'}
+                                    </button>
+                                </div>
+                                <div className="p-6 max-h-[600px] overflow-y-auto custom-scrollbar">
+                                    {solutionData.latex_solution ? (
+                                        <div className="space-y-8">
+                                            {(Array.isArray(solutionData.latex_solution) ? solutionData.latex_solution : [solutionData.latex_solution]).map((step, idx) => (
+                                                <div key={idx} className="relative pl-6 border-l-2 border-indigo-100">
+                                                    <span className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-2 border-indigo-200"></span>
+                                                    <MathEquation latex={step} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12 text-slate-400">
+                                            No derivation available.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

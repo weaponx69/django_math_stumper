@@ -162,6 +162,10 @@ ODE_SOLVER_SETTINGS = {
     'ATOL': 1e-16,
 }
 
+# OpenAI API Settings
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-4o-mini')
+
 # Logging
 LOGGING = {
     'version': 1,
