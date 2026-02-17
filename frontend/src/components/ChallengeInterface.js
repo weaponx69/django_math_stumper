@@ -47,6 +47,11 @@ const ChallengeInterface = () => {
     const [solutionData, setSolutionData] = useState(null);
     const [hasCalculated, setHasCalculated] = useState(false);
     const [copySuccess, setCopySuccess] = useState('');
+    
+    // AI Explanation state
+    const [aiExplanation, setAiExplanation] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     const [coefficients, setCoefficients] = useState([
         [1, 1, 1, 1],
@@ -167,6 +172,27 @@ const ChallengeInterface = () => {
 
     const handleInitialConditionChange = (key, value) => {
         setInitialConditions({ ...initialConditions, [key]: value });
+    };
+
+    // Function to get AI explanation
+    const getAIExplanation = async () => {
+        if (!solutionData || !solutionData.task_id) return;
+        
+        setAiLoading(true);
+        setAiError(null);
+        
+        try {
+            const response = await axios.get(`/api/task/${solutionData.task_id}/explain/`);
+            if (response.data.success) {
+                setAiExplanation(response.data.explanation);
+            } else {
+                setAiError(response.data.error || 'Failed to get explanation');
+            }
+        } catch (err) {
+            setAiError(err.response?.data?.error || err.message);
+        } finally {
+            setAiLoading(false);
+        }
     };
 
     if (loading) {
@@ -448,6 +474,75 @@ const ChallengeInterface = () => {
                                                         : `Expected ${verificationResult.ground_truth}, received ${verificationResult.submitted_solution}`
                                                     }
                                                 </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* AI Explanation Section */}
+                            <div className="mt-6 bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                                <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4 text-white">
+                                    <h3 className="text-lg font-bold">AI Tutor</h3>
+                                    <p className="text-purple-100 text-sm opacity-90">Get help from AI</p>
+                                </div>
+                                <div className="p-6">
+                                    {!aiExplanation && !aiError && (
+                                        <button 
+                                            onClick={getAIExplanation}
+                                            disabled={aiLoading}
+                                            className="w-full py-3 px-4 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                        >
+                                            {aiLoading ? (
+                                                <>
+                                                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                    </svg>
+                                                    Getting explanation...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                    </svg>
+                                                    Get AI Explanation
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                    
+                                    {aiLoading && (
+                                        <div className="flex items-center justify-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
+                                        </div>
+                                    )}
+                                    
+                                    {aiError && (
+                                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                                            <p className="text-red-800 text-sm">{aiError}</p>
+                                            <button 
+                                                onClick={getAIExplanation}
+                                                className="mt-2 text-sm text-violet-600 hover:text-violet-800 underline"
+                                            >
+                                                Try again
+                                            </button>
+                                        </div>
+                                    )}
+                                    
+                                    {aiExplanation && (
+                                        <div className="mt-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-xs font-semibold text-violet-600 uppercase">AI Response</span>
+                                                <button 
+                                                    onClick={() => { setAiExplanation(null); setAiError(null); }}
+                                                    className="text-xs text-slate-400 hover:text-slate-600"
+                                                >
+                                                    Clear
+                                                </button>
+                                            </div>
+                                            <div className="p-4 bg-violet-50 border border-violet-100 rounded-xl max-h-[300px] overflow-y-auto">
+                                                <p className="text-slate-700 text-sm whitespace-pre-wrap">{aiExplanation}</p>
                                             </div>
                                         </div>
                                     )}
