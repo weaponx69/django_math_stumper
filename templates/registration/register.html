@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - Math Stumper</title>
+    <title>Register - Math Stumper</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,7 +12,7 @@
             margin: 0;
             background-color: #f5f5f5;
         }
-        .login-container {
+        .register-container {
             background: white;
             padding: 2rem;
             border-radius: 8px;
@@ -30,7 +30,7 @@
             flex-direction: column;
             gap: 1rem;
         }
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="email"] {
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -52,30 +52,34 @@
             color: #dc3545;
             font-size: 0.875rem;
         }
-        .register-link {
+        .helptext {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        .login-link {
             text-align: center;
             margin-top: 1rem;
             font-size: 0.9rem;
         }
-        .register-link a {
+        .login-link a {
             color: #007bff;
             text-decoration: none;
         }
-        .register-link a:hover {
+        .login-link a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
+    <div class="register-container">
+        <h2>Create Account</h2>
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit">Login</button>
+            <button type="submit">Register</button>
         </form>
-        <div class="register-link">
-            Don't have an account? <a href="{% url 'register' %}">Register here</a>
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
         </div>
     </div>
 </body>

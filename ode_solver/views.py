@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
 from django.conf import settings
 import json
 import decimal
@@ -35,6 +37,32 @@ class UserView(View):
             'is_authenticated': request.user.is_authenticated,
             'username': request.user.username if request.user.is_authenticated else None,
         })
+
+
+class RegisterView(View):
+    """Registration view to create new user accounts"""
+    
+    def get(self, request):
+        """Show registration form"""
+        if request.user.is_authenticated:
+            # Redirect to homepage if already logged in
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect('http://localhost:3000')
+        
+        form = UserCreationForm()
+        return render(request, 'registration/register.html', {'form': form})
+    
+    def post(self, request):
+        """Process registration form"""
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Log the user in after registration
+            login(request, user)
+            # Redirect to the frontend
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect('http://localhost:3000')
+        return render(request, 'registration/register.html', {'form': form})
 
 
 class GenerateODETaskView(View):

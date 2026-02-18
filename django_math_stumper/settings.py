@@ -135,7 +135,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Django REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -149,7 +149,8 @@ REST_FRAMEWORK = {
 }
 
 # Login redirect URL
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'http://localhost:3000'
+LOGOUT_REDIRECT_URL = 'http://localhost:3000'
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
