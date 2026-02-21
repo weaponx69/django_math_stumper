@@ -19,4 +19,3 @@ urlpatterns = [
     path('api/auth/register/', views.RegisterView.as_view(), name='api_register'),
     path('', views.index, name='index'),
 ]
-
