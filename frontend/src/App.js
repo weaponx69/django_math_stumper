@@ -27,17 +27,25 @@ function LoginButton() {
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch(`${API_URL}/accounts/logout/`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      setIsLoggedIn(false);
-      navigate('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+   try {
+    // Get CSRF token from cookie
+    const csrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1];
+
+    await fetch(`${API_URL}/accounts/logout/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    });
+    window.location.href = `${API_URL}/accounts/login/`;
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+ };
 
 
   if (isLoggedIn) {
