@@ -15,6 +15,18 @@ __pycache__/
 venv/
 .envrc
 
+# Node / Codux / React
+node_modules/
+.codux/
+dist/
+build/
+.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
 # IDE
 .vscode/
 .idea/

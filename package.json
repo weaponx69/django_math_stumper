@@ -1,0 +1,26 @@
+{
+  "name": "django_math_stumper",
+  "version": "1.0.0",
+  "description": "A math equation creator to write math equations that stump AI",
+  "homepage": "https://github.com/weaponx69/django_math_stumper#readme",
+  "bugs": {
+    "url": "https://github.com/weaponx69/django_math_stumper/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weaponx69/django_math_stumper.git"
+  },
+  "license": "ISC",
+  "author": "Brian Perry",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@wixc3/react-board": "^4.6.2"
+  },
+  "dependencies": {
+    "@wixc3/define-remix-app": "^4.6.2"
+  }
+}
