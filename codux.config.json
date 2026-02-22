@@ -1,0 +1,11 @@
+{
+  "$schema": "https://wixplosives.github.io/codux-config-schema/codux.config.schema.json",
+  "boardDist": ".codux/boards",
+  "componentsDirectory": "src",
+  "scripts": {
+    "install": "npm install"
+  },
+  "previewConfiguration": {
+    "strategy": "component"
+  }
+}
