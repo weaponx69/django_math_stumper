@@ -117,6 +117,7 @@ function App() {
                   <h1 className="text-xl font-bold tracking-tight text-white">
                     Math<span className="text-blue-400">Stumper</span>
                   </h1>
+                  <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">AI Processing Active</p>
                   </div>
