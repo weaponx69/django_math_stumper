@@ -1,6 +1,6 @@
 {
   "$schema": "https://wixplosives.github.io/codux-config-schema/codux.config.schema.json",
-  "boardDist": ".codux/boards",
+  "boardsPath": ".codux/boards",
   "componentsDirectory": "src",
   "previewConfiguration": {
     "strategy": "component"
