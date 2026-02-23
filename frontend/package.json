@@ -47,6 +47,7 @@
   "devDependencies": {
     "@craco/craco": "^7.1.0",
     "@onlook/babel-plugin-react": "^2.1.1",
+    "@wixc3/react-board": "^4.6.2",
     "autoprefixer": "^10.4.24",
     "concurrently": "^9.2.1",
     "customize-cra": "^1.0.0",
