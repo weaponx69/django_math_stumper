@@ -8,11 +8,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-math_stumper}
       POSTGRES_USER: ${POSTGRES_USER:-math_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-math_password_123}
-    command: ["postgres", "-p", "5434"] # Force it to listen on 5434
+    command: ["postgres", "-p", "5435"] # Force it to listen on 5435 (changed from 5434 to avoid conflict)
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p 5434 -U ${POSTGRES_USER:-math_user} -d ${POSTGRES_DB:-math_stumper}"]
+      test: ["CMD-SHELL", "pg_isready -p 5435 -U ${POSTGRES_USER:-math_user} -d ${POSTGRES_DB:-math_stumper}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -33,7 +33,7 @@ services:
       - POSTGRES_USER=math_user
       - POSTGRES_PASSWORD=math_password_123
       - POSTGRES_HOST=localhost
-      - POSTGRES_PORT=5434
+      - POSTGRES_PORT=5435
       - ALLOWED_HOSTS=*
       - CORS_ALLOW_ALL_ORIGINS=True
     depends_on:
