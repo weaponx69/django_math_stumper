@@ -7,11 +7,10 @@ function App() {
   useEffect(() => {
     // Fetch data from Django backend
     fetch('http://localhost:8000/api/generate/', {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
     })
       .then(response => {
         if (response.ok) {
