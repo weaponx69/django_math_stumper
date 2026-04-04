@@ -14,7 +14,7 @@ urlpatterns = [
     path('api/hint/', views.AIHintView.as_view(), name='ai_hint'),
     path('api/save_prompt/', SavePromptView.as_view(), name='save_prompt'),
     path('api/user/', views.UserView.as_view(), name='user'),
-    path('api/auth/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='api_login'),
+    path('api/auth/login/', views.ApiLoginView.as_view(), name='api_login'),
     path('api/auth/logout/', auth_views.LogoutView.as_view(), name='api_logout'),
     path('api/auth/register/', views.RegisterView.as_view(), name='api_register'),
     path('', views.index, name='index'),

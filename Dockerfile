@@ -15,9 +15,9 @@ RUN apt-get update && apt-get install -y \
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies (as root first, then copy to appuser)
 COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY . /app/

@@ -39,6 +39,48 @@ class UserView(View):
         })
 
 
+from django.contrib.auth import authenticate
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ApiLoginView(View):
+    """API endpoint for login - handles JSON login without CSRF"""
+    
+    def post(self, request):
+        """Process login from React frontend"""
+        try:
+            data = json.loads(request.body)
+            username = data.get('username', '')
+            password = data.get('password', '')
+            
+            if not username or not password:
+                return JsonResponse({'error': 'Username and password are required'}, status=400)
+            
+            # Authenticate user
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return JsonResponse({
+                    'success': True,
+                    'username': user.username,
+                    'is_authenticated': True,
+                })
+            else:
+                return JsonResponse({'error': 'Invalid username or password'}, status=401)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    def get(self, request):
+        """Return login form (for traditional browser access)"""
+        if request.user.is_authenticated:
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect('http://localhost:3000')
+        return render(request, 'registration/login.html')
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(View):
     """Registration view to create new user accounts"""
     
@@ -53,7 +95,46 @@ class RegisterView(View):
         return render(request, 'registration/register.html', {'form': form})
     
     def post(self, request):
-        """Process registration form"""
+        """Process registration form - handles both form data and JSON"""
+        # Handle JSON data from React frontend
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                username = data.get('username', '')
+                password1 = data.get('password1', '')
+                password2 = data.get('password2', '')
+                
+                # Validate passwords match
+                if password1 != password2:
+                    return JsonResponse({'error': 'Passwords do not match'}, status=400)
+                
+                # Create user using UserCreationForm
+                form = UserCreationForm({
+                    'username': username,
+                    'password1': password1,
+                    'password2': password2,
+                })
+                if form.is_valid():
+                    user = form.save()
+                    # Log the user in after registration
+                    login(request, user)
+                    return JsonResponse({
+                        'success': True,
+                        'username': user.username,
+                        'is_authenticated': True,
+                    })
+                else:
+                    # Return form errors
+                    errors = {}
+                    for field, error_list in form.errors.items():
+                        errors[field] = [str(e) for e in error_list]
+                    return JsonResponse({'error': 'Registration failed', 'errors': errors}, status=400)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+        
+        # Handle traditional form submission
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
