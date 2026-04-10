@@ -16,6 +16,10 @@ function App() {
   const [registerForm, setRegisterForm] = useState({ username: '', password: '', password2: '' });
   const [authError, setAuthError] = useState('');
 
+  // AI Assistance state
+  const [aiExplanation, setAIExplanation] = useState(null);
+  const [aiHint, setAIHint] = useState(null);
+
   // Matrix/Task state
   const [currentTask, setCurrentTask] = useState(null);
   const [problems, setProblems] = useState([]);
@@ -24,6 +28,38 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Loading...');
 
+  // AI Assistance handlers
+  const handleGetAIExplanation = async (taskId) => {
+    setLoading(true);
+    setAIExplanation(null);
+    try {
+      const result = await getAIExplanation(taskId);
+      if (result.error) {
+        setMessage(result.error);
+      } else {
+        setAIExplanation(result.explanation);
+      }
+    } catch (error) {
+      setMessage('Error getting AI explanation: ' + error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleGetAIHint = async () => {
+    setLoading(true);
+    setAIHint(null);
+    try {
+      const result = await getAIHint();
+      if (result.error) {
+        setMessage(result.error);
+      } else {
+        setAIHint(result.hint);
+      }
+    } catch (error) {
+      setMessage('Error getting AI hint: ' + error.message);
+    }
+    setLoading(false);
+  };
   // Check authentication status on mount
   useEffect(() => {
     checkAuth();
@@ -169,31 +205,70 @@ function App() {
     }
   };
 
-  const generateNewTask = async () => {
-    setLoading(true);
-    setVerificationResult(null);
-    setUserSolution('');
-    try {
-      const response = await fetch(`${API_BASE}/generate/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentTask(data);
-      } else {
-        const errorData = await response.json();
-        setMessage('Failed to generate task: ' + (errorData.error || 'Unknown error'));
-      }
-    } catch (error) {
-      setMessage('Error: ' + error.message);
+const getAIExplanation = async (taskId) => {
+  try {
+    const response = await fetch(`${API_BASE}/task/${taskId}/explain/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    if (response.ok) {
+      return await response.json();
+    } else {
+      const errorData = await response.json();
+      return { error: errorData.error || 'Failed to get AI explanation' };
     }
-    setLoading(false);
-  };
+  } catch (error) {
+    return { error: 'Error: ' + error.message };
+  }
+};
 
+const getAIHint = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/hint/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    if (response.ok) {
+      return await response.json();
+    } else {
+      const errorData = await response.json();
+      return { error: errorData.error || 'Failed to get AI hint' };
+    }
+  } catch (error) {
+    return { error: 'Error: ' + error.message };
+  }
+};
+
+const generateNewTask = async () => {
+  setLoading(true);
+  setVerificationResult(null);
+  setUserSolution('');
+  try {
+    const response = await fetch(`${API_BASE}/generate/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setCurrentTask(data);
+    } else {
+      const errorData = await response.json();
+      setMessage('Failed to generate task: ' + (errorData.error || 'Unknown error'));
+    }
+  } catch (error) {
+    setMessage('Error: ' + error.message);
+  }
+  setLoading(false);
+};
   const verifySolution = async () => {
     if (!currentTask || !userSolution) return;
     try {
@@ -740,69 +815,79 @@ function App() {
                 </p>
               </div>
 
-              {/* Solution Input */}
-              <div style={{
-                padding: '20px',
-                backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                borderRadius: '12px',
-                border: '1px solid #334155'
-              }}>
-                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '12px' }}>
-                  Your solution (round to nearest integer):
-                </p>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <input
-                    type="number"
-                    value={userSolution}
-                    onChange={(e) => setUserSolution(e.target.value)}
-                    placeholder="Enter your answer"
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid #334155',
-                      borderRadius: '8px',
-                      color: '#e2e8f0',
-                      fontSize: '18px',
-                      outline: 'none',
-                    }}
-                  />
+
+
+              {/* AI Assistance Buttons */}
+              {currentTask && (
+                <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   <button
-                    onClick={verifySolution}
+                    onClick={() => handleGetAIExplanation(currentTask.task_id)}
+                    disabled={loading}
                     style={{
-                      padding: '12px 24px',
+                      padding: '10px 16px',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      opacity: loading ? 0.6 : 1,
+                    }}
+                  >
+                    {loading ? 'Loading...' : 'Get AI Explanation'}
+                  </button>
+                  <button
+                    onClick={handleGetAIHint}
+                    disabled={loading}
+                    style={{
+                      padding: '10px 16px',
                       backgroundColor: '#10b981',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
+                      fontSize: '14px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      opacity: loading ? 0.6 : 1,
                     }}
                   >
-                    Verify
+                    {loading ? 'Loading...' : 'Get AI Hint'}
                   </button>
                 </div>
+              )}
 
-                {verificationResult && (
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    backgroundColor: verificationResult.is_correct
-                      ? 'rgba(16, 185, 129, 0.2)'
-                      : 'rgba(239, 68, 68, 0.2)',
-                    border: `1px solid ${verificationResult.is_correct ? '#10b981' : '#ef4444'}`,
-                    color: verificationResult.is_correct ? '#34d399' : '#f87171',
-                    fontSize: '16px',
-                    textAlign: 'center'
-                  }}>
-                    {verificationResult.is_correct
-                      ? `✓ Correct! The solution is ${verificationResult.ground_truth}`
-                      : `✗ Incorrect. Your answer: ${verificationResult.submitted_solution}, Ground truth: ${verificationResult.ground_truth}`}
-                  </div>
-                )}
-              </div>
+              {/* AI Explanation Result */}
+              {aiExplanation && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  color: '#3b82f6',
+                  fontSize: '14px',
+                  textAlign: 'left'
+                }}>
+                  <h4 style={{ color: '#3b82f6', fontSize: '16px', margin: '0 0 8px 0' }}>AI Explanation:</h4>
+                  <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiExplanation}</p>
+                </div>
+              )}
+
+              {/* AI Hint Result */}
+              {aiHint && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#10b981',
+                  fontSize: '14px',
+                  textAlign: 'left'
+                }}>
+                  <h4 style={{ color: '#10b981', fontSize: '16px', margin: '0 0 8px 0' }}>AI Hint:</h4>
+                  <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiHint}</p>
+                </div>
+              )}
 
               {/* LaTeX Preview */}
               {currentTask.equation_preview && currentTask.equation_preview.raw_latex && (
