@@ -19,7 +19,7 @@ function App()
 
   // AI Assistance state
   const [aiExplanation, setAIExplanation] = useState(null);
-  const [aiHint, setAIHint] = useState(null);
+  const [aiStumper, setAIStumper] = useState(null);
 
   // Matrix/Task state
   const [currentTask, setCurrentTask] = useState(null);
@@ -46,18 +46,18 @@ function App()
     setLoading(false);
   };
 
-  const handleGetAIHint = async (taskId) => {
+  const handleGetStumperExplanation = async (taskId) => {
     setLoading(true);
-    setAIHint(null);
+    setAIStumper(null);
     try {
-      const result = await getAIHint(taskId);
+      const result = await getStumperAnalysis(taskId);
       if (result.error) {
         setMessage(result.error);
       } else {
-        setAIHint(result.hint);
+        setAIStumper(result.analysis);
       }
     } catch (error) {
-      setMessage('Error getting AI hint: ' + error.message);
+      setMessage('Error getting stumper analysis: ' + error.message);
     }
     setLoading(false);
   };
@@ -228,21 +228,21 @@ const getAIExplanation = async (taskId) => {
   }
 };
 
-const getAIHint = async (taskId) => {
+const getStumperAnalysis = async (taskId) => {
   try {
-    const response = await fetch(`${API_BASE}/hint/`, {
+    const response = await fetch(`${API_BASE}/stumper/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ task_id: taskId, question: "I need a general hint on how to proceed." })
+      body: JSON.stringify({ task_id: taskId })
     });
     if (response.ok) {
       return await response.json();
     } else {
       const errorData = await response.json();
-      return { error: errorData.error || 'Failed to get AI hint' };
+      return { error: errorData.error || 'Failed to get stumper analysis' };
     }
   } catch (error) {
     return { error: 'Error: ' + error.message };
@@ -253,6 +253,10 @@ const generateNewTask = async () => {
   setLoading(true);
   setVerificationResult(null);
   setUserSolution('');
+  setAIExplanation(null);
+  setAIStumper(null);
+  setMessage('Generating problem and analyzing with AI...');
+  
   try {
     const response = await fetch(`${API_BASE}/generate/`, {
       method: 'GET',
@@ -261,9 +265,26 @@ const generateNewTask = async () => {
       },
       credentials: 'include',
     });
+    
     if (response.ok) {
       const data = await response.json();
       setCurrentTask(data);
+      
+      // Automatically fetch AI content in parallel
+      const [explRes, stumpRes] = await Promise.all([
+        getAIExplanation(data.task_id),
+        getStumperAnalysis(data.task_id)
+      ]);
+      
+      if (explRes.explanation) setAIExplanation(explRes.explanation);
+      if (explRes.error) setMessage(explRes.error);
+      
+      if (stumpRes.analysis) setAIStumper(stumpRes.analysis);
+      if (stumpRes.error) setMessage(stumpRes.error);
+      
+      if (!explRes.error && !stumpRes.error) {
+        setMessage('');
+      }
     } else {
       const errorData = await response.json();
       setMessage('Failed to generate task: ' + (errorData.error || 'Unknown error'));
@@ -819,46 +840,6 @@ const generateNewTask = async () => {
                 </p>
               </div>
 
-
-
-              {/* AI Assistance Buttons */}
-              {currentTask && (
-                <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => handleGetAIExplanation(currentTask.task_id)}
-                    disabled={loading}
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      opacity: loading ? 0.6 : 1,
-                    }}
-                  >
-                    {loading ? 'Loading...' : 'Get AI Explanation'}
-                  </button>
-                  <button
-                    onClick={() => handleGetAIHint(currentTask.task_id)}
-                    disabled={loading}
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      opacity: loading ? 0.6 : 1,
-                    }}
-                  >
-                    {loading ? 'Loading...' : 'Get AI Hint'}
-                  </button>
-                </div>
-              )}
-
               {/* Message Display */}
               {message && !message.includes('Loading') && (
                 <div style={{
@@ -891,20 +872,20 @@ const generateNewTask = async () => {
                 </div>
               )}
 
-              {/* AI Hint Result */}
-              {aiHint && (
+              {/* AI Stumper Result */}
+              {aiStumper && (
                 <div style={{
                   marginTop: '16px',
                   padding: '16px',
                   borderRadius: '8px',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  color: '#10b981',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  color: '#f59e0b',
                   fontSize: '14px',
                   textAlign: 'left'
                 }}>
-                  <h4 style={{ color: '#10b981', fontSize: '16px', margin: '0 0 8px 0' }}>AI Hint:</h4>
-                  <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiHint}</p>
+                  <h4 style={{ color: '#f59e0b', fontSize: '16px', margin: '0 0 8px 0' }}>Stumper Analysis:</h4>
+                  <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiStumper}</p>
                 </div>
               )}
 

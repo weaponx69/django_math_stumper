@@ -167,6 +167,10 @@ ODE_SOLVER_SETTINGS = {
 OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
 OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-4o-mini')
 
+# Gemini API Settings
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-flash-latest')
+
 # Logging
 LOGGING = {
     'version': 1,

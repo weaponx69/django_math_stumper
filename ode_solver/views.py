@@ -24,7 +24,7 @@ def get_gemini_model(system_instruction=None):
         return None
         
     genai.configure(api_key=api_key)
-    model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash')
+    model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
     
     if system_instruction:
         return genai.GenerativeModel(model_name, system_instruction=system_instruction)
@@ -628,13 +628,12 @@ class AIExplanationView(View):
                 max_output_tokens=1500,
             )
             response = model.generate_content(prompt, generation_config=generation_config)
-            
             ai_explanation = response.text
             
             return JsonResponse({
                 'task_id': task_id,
                 'explanation': ai_explanation,
-                'model_used': getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash'),
+                'model_used': getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest'),
                 'success': True
             })
             
@@ -683,16 +682,16 @@ Keep your explanation educational and accessible for someone learning differenti
         return prompt
 
 
-class AIHintView(View):
-    """API endpoint to get AI-generated hints for ODE tasks"""
+class AIStumperView(View):
+    """API endpoint to get AI-generated analysis of why an ODE task is particularly difficult"""
     
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
     
     def post(self, request):
-        """Generate a hint for an ODE task based on user's progress"""
-        system_instruction = "You are a helpful math tutor. Give concise, encouraging hints."
+        """Analyze why the ODE task is a 'stumper'"""
+        system_instruction = "You are an expert mathematician and computer scientist. Explain why specific mathematical problems are difficult for AI models or numerical solvers to handle reliably."
         model = get_gemini_model(system_instruction=system_instruction)
         
         if not model:
@@ -704,7 +703,6 @@ class AIHintView(View):
         try:
             data = json.loads(request.body)
             task_id = data.get('task_id')
-            user_question = data.get('question', '')
             
             # Get the task
             try:
@@ -713,32 +711,36 @@ class AIHintView(View):
                 return JsonResponse({'error': 'Task not found'}, status=404)
             
             coefficients = ode_task.get_coefficients_dict()
+            linear = coefficients.get('linear', [])
             target_time = float(ode_task.target_time)
             
-            # Build hint prompt
-            prompt = f"""The user is working on solving this ODE system:
-
-dx/dt = {coefficients['linear'][0][0]:.2f}x + {coefficients['linear'][0][1]:.2f}y + {coefficients['linear'][0][2]:.2f}z + {coefficients['linear'][0][3]:.2f}w
-dy/dt = {coefficients['linear'][1][0]:.2f}x + {coefficients['linear'][1][1]:.2f}y + {coefficients['linear'][1][2]:.2f}z + {coefficients['linear'][1][3]:.2f}w
-dz/dt = {coefficients['linear'][2][0]:.2f}x + {coefficients['linear'][2][1]:.2f}y + {coefficients['linear'][2][2]:.2f}z + {coefficients['linear'][2][3]:.2f}w
-dw/dt = {coefficients['linear'][3][0]:.2f}x + {coefficients['linear'][3][1]:.2f}y + {coefficients['linear'][3][2]:.2f}z + {coefficients['linear'][3][3]:.2f}w
+            # Build stumper prompt
+            prompt = f"""This system of ODEs was generated to 'stump' an AI or numerical solver:
+            
+dx/dt = {linear[0][0]:.4f}x + {linear[0][1]:.4f}y + {linear[0][2]:.4f}z + {linear[0][3]:.4f}w
+dy/dt = {linear[1][0]:.4f}x + {linear[1][1]:.4f}y + {linear[1][2]:.4f}z + {linear[1][3]:.4f}w
+dz/dt = {linear[2][0]:.4f}x + {linear[2][1]:.4f}y + {linear[2][2]:.4f}z + {linear[2][3]:.4f}w
+dw/dt = {linear[3][0]:.4f}x + {linear[3][1]:.4f}y + {linear[3][2]:.4f}z + {linear[3][3]:.4f}w
 
 Target time: t = {target_time}
 
-The user asks: "{user_question}"
+Explain exactly why this generated problem might stump an AI model or a standard numerical integrator. 
+Talk about things like:
+1. Matrix properties (stiffness, condition number, eigenvalues).
+2. Numerical stability issues (error accumulation over time).
+3. The specific structure of the coefficients that makes analytical or numerical solving 'tricky'.
 
-Provide a helpful hint (2-3 sentences max) that guides them without giving away the full solution. Be encouraging and specific."""
+Provide a concise but technical explanation (3-5 sentences)."""
             
             generation_config = genai.types.GenerationConfig(
                 temperature=0.7,
-                max_output_tokens=200,
+                max_output_tokens=400,
             )
             response = model.generate_content(prompt, generation_config=generation_config)
-            
-            hint = response.text
+            analysis = response.text
             
             return JsonResponse({
-                'hint': hint,
+                'analysis': analysis,
                 'success': True
             })
             
