@@ -865,7 +865,9 @@ const generateNewTask = async () => {
                   border: '1px solid rgba(59, 130, 246, 0.3)',
                   color: '#3b82f6',
                   fontSize: '14px',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  maxHeight: '600px',
+                  overflowY: 'auto'
                 }}>
                   <h4 style={{ color: '#3b82f6', fontSize: '16px', margin: '0 0 8px 0' }}>AI Explanation:</h4>
                   <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiExplanation}</p>
@@ -882,7 +884,9 @@ const generateNewTask = async () => {
                   border: '1px solid rgba(245, 158, 11, 0.3)',
                   color: '#f59e0b',
                   fontSize: '14px',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  maxHeight: '400px',
+                  overflowY: 'auto'
                 }}>
                   <h4 style={{ color: '#f59e0b', fontSize: '16px', margin: '0 0 8px 0' }}>Stumper Analysis:</h4>
                   <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiStumper}</p>

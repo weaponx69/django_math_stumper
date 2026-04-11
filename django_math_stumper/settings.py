@@ -169,7 +169,7 @@ OPENAI_MODEL = config('OPENAI_MODEL', default='gpt-4o-mini')
 
 # Gemini API Settings
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
-GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-flash-latest')
+GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-1.5-flash-latest')
 
 # Logging
 LOGGING = {

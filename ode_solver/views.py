@@ -24,7 +24,7 @@ def get_gemini_model(system_instruction=None):
         return None
         
     genai.configure(api_key=api_key)
-    model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
+    model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash-latest')
     
     if system_instruction:
         return genai.GenerativeModel(model_name, system_instruction=system_instruction)
@@ -625,7 +625,8 @@ class AIExplanationView(View):
             # Call Gemini API
             generation_config = genai.types.GenerationConfig(
                 temperature=0.7,
-                max_output_tokens=1500,
+                max_output_tokens=2048,
+                stop_sequences=[]
             )
             response = model.generate_content(prompt, generation_config=generation_config)
             ai_explanation = response.text
@@ -730,11 +731,12 @@ Talk about things like:
 2. Numerical stability issues (error accumulation over time).
 3. The specific structure of the coefficients that makes analytical or numerical solving 'tricky'.
 
-Provide a concise but technical explanation (3-5 sentences)."""
+Provide a detailed technical analysis. Do not be overly concise; explain the 'why' thoroughly."""
             
             generation_config = genai.types.GenerationConfig(
                 temperature=0.7,
-                max_output_tokens=400,
+                max_output_tokens=1024,
+                stop_sequences=[]
             )
             response = model.generate_content(prompt, generation_config=generation_config)
             analysis = response.text
