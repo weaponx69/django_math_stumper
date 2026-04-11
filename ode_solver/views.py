@@ -656,14 +656,12 @@ class AIExplanationView(View):
             }, status=500)
     
     def _build_explanation_prompt(self, coefficients, initial_conditions, target_time, final_values):
-        """Build a detailed prompt for the AI"""
+        """Build a rigorous, exhaustive mathematical derivation for the AI"""
         linear = coefficients.get('linear', [])
         
-        prompt = f"""Please explain how to solve this system of linear differential equations:
+        prompt = f"""Perform a rigorous, step-by-step mathematical derivation for the solution of the following linear system of differential equations:
 
-The system is: dU/dt = A*U where U = [x, y, z, w]^T
-
-Coefficient matrix A:
+The system is defined as dU/dt = A*U where U(t) = [x, y, z, w]^T and the coefficient matrix A is:
 {linear[0][0]:.4f} {linear[0][1]:.4f} {linear[0][2]:.4f} {linear[0][3]:.4f}
 {linear[1][0]:.4f} {linear[1][1]:.4f} {linear[1][2]:.4f} {linear[1][3]:.4f}
 {linear[2][0]:.4f} {linear[2][1]:.4f} {linear[2][2]:.4f} {linear[2][3]:.4f}
@@ -675,21 +673,15 @@ y(0) = {initial_conditions['y0']}
 z(0) = {initial_conditions['z0']}
 w(0) = {initial_conditions['w0']}
 
-Target time: t = {target_time}
+Your derivation must include:
+1. System Analysis: An exhaustive eigenvalue and eigenvector analysis of matrix A.
+2. Analytical Solution Construction: The complete derivation of the general solution.
+3. Particular Evaluation: Step-by-step calculation leading to the state at t={target_time}.
+4. Numerical Verification: Comparison of the derivation with the provided numerical result:
+   x({target_time}) = {final_values[0]:.6f}, y({target_time}) = {final_values[1]:.6f}, z({target_time}) = {final_values[2]:.6f}, w({target_time}) = {final_values[3]:.6f}
 
-The numerical solution at t={target_time} is:
-x({target_time}) = {final_values[0]:.6f}
-y({target_time}) = {final_values[1]:.6f}
-z({target_time}) = {final_values[2]:.6f}
-w({target_time}) = {final_values[3]:.6f}
-
-Please provide:
-1. A brief explanation of the matrix properties (is it diagonalizable? what are the eigenvalues?)
-2. The analytical solution method
-3. How the numerical solution was computed
-4. What the final values tell us about the system's behavior
-
-Keep your explanation educational and accessible for someone learning differential equations."""
+Provide at least 5-6 exhaustive paragraphs of deep mathematical analysis. Do not summarize; be meticulously detailed.
+"""
         
         return prompt
 
