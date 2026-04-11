@@ -11,24 +11,18 @@ import decimal
 from decimal import Decimal
 from .models import ODETask
 from .services import ODEGenerator, format_latex_solution, format_equation_latex
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 
-def get_gemini_model(system_instruction=None):
-    """Get Gemini model with API key from settings"""
-    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+def get_gemini_client():
+    """Initialize and return a Gemini client instance"""
+    api_key = getattr(settings, 'GEMINI_API_KEY', '').strip()
+    
     if not api_key:
-        api_key = getattr(settings, 'OPENAI_API_KEY', None)
-        
-    if not api_key or api_key == 'your-openai-api-key-here':
         return None
         
-    genai.configure(api_key=api_key)
-    model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash-latest')
-    
-    if system_instruction:
-        return genai.GenerativeModel(model_name, system_instruction=system_instruction)
-    return genai.GenerativeModel(model_name)
+    return genai.Client(api_key=api_key)
 
 
 def index(request):
@@ -586,9 +580,10 @@ class AIExplanationView(View):
     def get(self, request, task_id):
         """Generate an AI explanation for a specific ODE task"""
         system_instruction = "You are an expert mathematics tutor specializing in differential equations. Explain concepts clearly with step-by-step reasoning. Use LaTeX formatting for mathematical expressions when helpful."
-        model = get_gemini_model(system_instruction=system_instruction)
+        client = get_gemini_client()
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-pro')
         
-        if not model:
+        if not client:
             return JsonResponse({
                 'error': 'Gemini API key not configured. Please set GEMINI_API_KEY in .env file.',
                 'configured': False
@@ -623,18 +618,21 @@ class AIExplanationView(View):
             )
             
             # Call Gemini API
-            generation_config = genai.types.GenerationConfig(
-                temperature=0.7,
-                max_output_tokens=2048,
-                stop_sequences=[]
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.7,
+                    max_output_tokens=2048,
+                )
             )
-            response = model.generate_content(prompt, generation_config=generation_config)
             ai_explanation = response.text
             
             return JsonResponse({
                 'task_id': task_id,
                 'explanation': ai_explanation,
-                'model_used': getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest'),
+                'model_used': model_name,
                 'success': True
             })
             
@@ -693,9 +691,10 @@ class AIStumperView(View):
     def post(self, request):
         """Analyze why the ODE task is a 'stumper'"""
         system_instruction = "You are an expert mathematician and computer scientist. Explain why specific mathematical problems are difficult for AI models or numerical solvers to handle reliably."
-        model = get_gemini_model(system_instruction=system_instruction)
+        client = get_gemini_client()
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-pro')
         
-        if not model:
+        if not client:
             return JsonResponse({
                 'error': 'Gemini API key not configured.',
                 'configured': False
@@ -733,12 +732,15 @@ Talk about things like:
 
 Provide a detailed technical analysis. Do not be overly concise; explain the 'why' thoroughly."""
             
-            generation_config = genai.types.GenerationConfig(
-                temperature=0.7,
-                max_output_tokens=1024,
-                stop_sequences=[]
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.7,
+                    max_output_tokens=1024,
+                )
             )
-            response = model.generate_content(prompt, generation_config=generation_config)
             analysis = response.text
             
             return JsonResponse({
