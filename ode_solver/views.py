@@ -704,8 +704,8 @@ class AIStumperView(View):
     def post(self, request):
         """Analyze why the ODE task is a 'stumper'"""
         system_instruction = textwrap.dedent("""
-            You are an expert mathematician and computer scientist. 
-            Explain why specific mathematical problems are difficult for AI models or numerical solvers to handle reliably.
+            You are a senior numerical analyst and PhD mathematician. 
+            Provide an exhaustive technical report on the numerical stability, stiffness, and error propagation characteristics of the given differential equation system.
         """).strip()
         client = get_gemini_client()
         model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
@@ -730,23 +730,23 @@ class AIStumperView(View):
             linear = coefficients.get('linear', [])
             target_time = float(ode_task.target_time)
             
-            # Build stumper prompt
-            prompt = f"""This system of ODEs was generated to 'stump' an AI or numerical solver:
+            # Build stability analysis prompt
+            prompt = f"""Perform a rigorous technical analysis of the following linear system for numerical stability and potential integration 'traps':
             
-dx/dt = {linear[0][0]:.4f}x + {linear[0][1]:.4f}y + {linear[0][2]:.4f}z + {linear[0][3]:.4f}w
-dy/dt = {linear[1][0]:.4f}x + {linear[1][1]:.4f}y + {linear[1][2]:.4f}z + {linear[1][3]:.4f}w
-dz/dt = {linear[2][0]:.4f}x + {linear[2][1]:.4f}y + {linear[2][2]:.4f}z + {linear[2][3]:.4f}w
-dw/dt = {linear[3][0]:.4f}x + {linear[3][1]:.4f}y + {linear[3][2]:.4f}z + {linear[3][3]:.4f}w
+dU/dt = A*U where A is:
+{linear[0][0]:.4f} {linear[0][1]:.4f} {linear[0][2]:.4f} {linear[0][3]:.4f}
+{linear[1][0]:.4f} {linear[1][1]:.4f} {linear[1][2]:.4f} {linear[1][3]:.4f}
+{linear[2][0]:.4f} {linear[2][1]:.4f} {linear[2][2]:.4f} {linear[2][3]:.4f}
+{linear[3][0]:.4f} {linear[3][1]:.4f} {linear[3][2]:.4f} {linear[3][3]:.4f}
 
 Target time: t = {target_time}
 
-Explain exactly why this generated problem might stump an AI model or a standard numerical integrator. 
-Talk about things like:
-1. Matrix properties (stiffness, condition number, eigenvalues).
-2. Numerical stability issues (error accumulation over time).
-3. The specific structure of the coefficients that makes analytical or numerical solving 'tricky'.
+Your report must cover:
+1. Matrix Properties: Eigenvalue distribution, presence of zero/unstable modes, and the condition number.
+2. Numerical Integration Risks: Sensitivity to step size, risk of error accumulation, and potential for numerical instability.
+3. Algebraic Structure: The implications of the rank and sparsity of this specific coefficient set.
 
-Provide a high-level technical thesis. Write at least 3 detailed paragraphs explaining the underlying mathematical 'traps' in this specific system. Do not be concise; be exhaustive.
+Provide at least 4-5 exhaustive paragraphs of technical analysis. Do not provide a summary; be as verbose and detailed as possible.
 """
             
             response = client.models.generate_content(
@@ -755,7 +755,7 @@ Provide a high-level technical thesis. Write at least 3 detailed paragraphs expl
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
                     temperature=0.7,
-                    max_output_tokens=1024,
+                    max_output_tokens=2048,
                 )
             )
             analysis = response.text
