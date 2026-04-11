@@ -594,7 +594,7 @@ class AIExplanationView(View):
             Do not provide a brief summary.
         """).strip()
         client = get_gemini_client()
-        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-pro-latest')
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
         
         if not client:
             return JsonResponse({
@@ -708,7 +708,7 @@ class AIStumperView(View):
             Explain why specific mathematical problems are difficult for AI models or numerical solvers to handle reliably.
         """).strip()
         client = get_gemini_client()
-        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-pro-latest')
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
         
         if not client:
             return JsonResponse({
