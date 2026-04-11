@@ -580,19 +580,8 @@ class AIExplanationView(View):
     
     def get(self, request, task_id):
         """Generate an AI explanation for a specific ODE task"""
-        system_instruction = textwrap.dedent("""
-            You are an expert mathematics tutor specializing in differential equations. 
-            Provide an incredibly detailed, step-by-step mathematical explanation of the solution process. 
-            Use LaTeX for all mathematical expressions. 
-            Break the solution down into logical phases:
-            1. System Analysis (eigenvalues/eigenvectors).
-            2. General Solution Construction.
-            3. Particular Solution (if applicable).
-            4. Final specific result for the target time.
+        system_instruction = "You are a senior PhD mathematician and expert differential equations tutor. Use LaTeX for all mathematical expressions."
 
-            Be as verbose as possible. Provide at least 4-5 detailed paragraphs of mathematical reasoning. 
-            Do not provide a brief summary.
-        """).strip()
         client = get_gemini_client()
         model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
         
@@ -659,7 +648,8 @@ class AIExplanationView(View):
         """Build a rigorous, exhaustive mathematical derivation for the AI"""
         linear = coefficients.get('linear', [])
         
-        prompt = f"""Perform a rigorous, step-by-step mathematical derivation for the solution of the following linear system of differential equations:
+        prompt = f"""COMMAND: Perform a RIGOROUS, EXHAUSTIVE, multi-paragraph mathematical derivation for the solution of the following linear system. 
+DO NOT PROVIDE A SUMMARY. Provide at least 5-6 paragraphs of deep mathematical analysis.
 
 The system is defined as dU/dt = A*U where U(t) = [x, y, z, w]^T and the coefficient matrix A is:
 {linear[0][0]:.4f} {linear[0][1]:.4f} {linear[0][2]:.4f} {linear[0][3]:.4f}
@@ -680,7 +670,7 @@ Your derivation must include:
 4. Numerical Verification: Comparison of the derivation with the provided numerical result:
    x({target_time}) = {final_values[0]:.6f}, y({target_time}) = {final_values[1]:.6f}, z({target_time}) = {final_values[2]:.6f}, w({target_time}) = {final_values[3]:.6f}
 
-Provide at least 5-6 exhaustive paragraphs of deep mathematical analysis. Do not summarize; be meticulously detailed.
+REITERATE: Be meticulously detailed and as verbose as possible. This is a technical report for PhD-level research.
 """
         
         return prompt
@@ -695,10 +685,8 @@ class AIStumperView(View):
     
     def post(self, request):
         """Analyze why the ODE task is a 'stumper'"""
-        system_instruction = textwrap.dedent("""
-            You are a senior numerical analyst and PhD mathematician. 
-            Provide an exhaustive technical report on the numerical stability, stiffness, and error propagation characteristics of the given differential equation system.
-        """).strip()
+        system_instruction = "You are a senior numerical analyst and PhD mathematician. Expertise: linear algebra and numerical stability."
+
         client = get_gemini_client()
         model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-flash-latest')
         
@@ -723,8 +711,9 @@ class AIStumperView(View):
             target_time = float(ode_task.target_time)
             
             # Build stability analysis prompt
-            prompt = f"""Perform a rigorous technical analysis of the following linear system for numerical stability and potential integration 'traps':
-            
+            prompt = f"""COMMAND: Perform a RIGOROUS, EXHAUSTIVE technical analysis of the following linear system for numerical stability and potential integration 'traps'.
+DO NOT PROVIDE A SUMMARY. Provide at least 4-5 exhaustive paragraphs of technical depth.
+
 dU/dt = A*U where A is:
 {linear[0][0]:.4f} {linear[0][1]:.4f} {linear[0][2]:.4f} {linear[0][3]:.4f}
 {linear[1][0]:.4f} {linear[1][1]:.4f} {linear[1][2]:.4f} {linear[1][3]:.4f}
@@ -738,7 +727,7 @@ Your report must cover:
 2. Numerical Integration Risks: Sensitivity to step size, risk of error accumulation, and potential for numerical instability.
 3. Algebraic Structure: The implications of the rank and sparsity of this specific coefficient set.
 
-Provide at least 4-5 exhaustive paragraphs of technical analysis. Do not provide a summary; be as verbose and detailed as possible.
+REITERATE: This is for PhD-level research. Be as verbose and technically detailed as possible.
 """
             
             response = client.models.generate_content(

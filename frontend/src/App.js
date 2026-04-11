@@ -91,6 +91,10 @@ function App()
           setShowLogin(false);
           setShowRegister(false);
           loadProblems();
+          // Automatically go to a new task if none is active
+          if (!currentTask) {
+            generateNewTask();
+          }
         }
       }
     } catch (error) {
@@ -125,6 +129,7 @@ function App()
           setShowRegister(false);
           setShowMatrix(true);
           loadProblems();
+          generateNewTask();
           return;
         }
       }
@@ -663,45 +668,17 @@ const generateNewTask = async () => {
               backgroundColor: 'rgba(15, 23, 42, 0.8)',
               border: '1px solid #1e293b',
               borderRadius: '24px',
-              padding: '60px',
-              textAlign: 'center',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              padding: '64px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px'
             }}>
-              <div style={{
-                width: '100px',
-                height: '100px',
-                margin: '0 auto 24px',
-                background: 'linear-gradient(to bottom right, #6366f1, #2563eb)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <span style={{ fontSize: '50px', color: 'white', fontFamily: 'serif' }}>∫</span>
-              </div>
-              <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
-                ODE System Solver
-              </h2>
-              <p style={{ color: '#94a3b8', marginBottom: '32px', fontSize: '16px' }}>
-                Solve systems of linear differential equations and verify your solutions
+              <div className="spinner"></div>
+              <p style={{ color: '#94a3b8', fontSize: '16px' }}>
+                Initializing system state and calculating solutions
               </p>
-              <button
-                onClick={generateNewTask}
-                disabled={loading}
-                style={{
-                  padding: '16px 32px',
-                  backgroundColor: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                {loading ? 'Generating...' : 'Generate New Challenge'}
-              </button>
             </div>
           ) : (
             <div style={{
