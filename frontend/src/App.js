@@ -66,6 +66,13 @@ function App()
     checkAuth();
   }, []);
 
+  // Trigger MathJax typesetting whenever math content changes
+  useEffect(() => {
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err));
+    }
+  }, [aiExplanation, aiStumper, currentTask, verificationResult]);
+
   const checkAuth = async () => {
     try {
       const response = await fetch(`${API_BASE}/user/`, {
@@ -858,38 +865,42 @@ const generateNewTask = async () => {
               {/* AI Explanation Result */}
               {aiExplanation && (
                 <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  color: '#3b82f6',
-                  fontSize: '14px',
+                  marginTop: '20px',
+                  padding: '24px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.4)',
+                  border: '1px solid rgba(59, 130, 246, 0.5)',
+                  color: '#e2e8f0',
+                  fontSize: '15px',
+                  lineHeight: '1.6',
                   textAlign: 'left',
-                  maxHeight: '600px',
-                  overflowY: 'auto'
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}>
-                  <h4 style={{ color: '#3b82f6', fontSize: '16px', margin: '0 0 8px 0' }}>AI Explanation:</h4>
-                  <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiExplanation}</p>
+                  <h4 style={{ color: '#60a5fa', fontSize: '18px', fontWeight: '700', margin: '0 0 16px 0', borderBottom: '1px solid rgba(96, 165, 250, 0.2)', paddingBottom: '8px' }}>
+                    Mathematical Explanation
+                  </h4>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{aiExplanation}</div>
                 </div>
               )}
 
               {/* AI Stumper Result */}
               {aiStumper && (
                 <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  color: '#f59e0b',
-                  fontSize: '14px',
+                  marginTop: '20px',
+                  padding: '24px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.4)',
+                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                  color: '#e2e8f0',
+                  fontSize: '15px',
+                  lineHeight: '1.6',
                   textAlign: 'left',
-                  maxHeight: '400px',
-                  overflowY: 'auto'
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}>
-                  <h4 style={{ color: '#f59e0b', fontSize: '16px', margin: '0 0 8px 0' }}>Stumper Analysis:</h4>
-                  <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{aiStumper}</p>
+                  <h4 style={{ color: '#fbbf24', fontSize: '18px', fontWeight: '700', margin: '0 0 16px 0', borderBottom: '1px solid rgba(251, 191, 36, 0.2)', paddingBottom: '8px' }}>
+                    Stumper Analysis
+                  </h4>
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{aiStumper}</div>
                 </div>
               )}
 

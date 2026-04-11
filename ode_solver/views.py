@@ -11,6 +11,7 @@ import decimal
 from decimal import Decimal
 from .models import ODETask
 from .services import ODEGenerator, format_latex_solution, format_equation_latex
+import textwrap
 from google import genai
 from google.genai import types
 
@@ -579,9 +580,21 @@ class AIExplanationView(View):
     
     def get(self, request, task_id):
         """Generate an AI explanation for a specific ODE task"""
-        system_instruction = "You are an expert mathematics tutor specializing in differential equations. Explain concepts clearly with step-by-step reasoning. Use LaTeX formatting for mathematical expressions when helpful."
+        system_instruction = textwrap.dedent("""
+            You are an expert mathematics tutor specializing in differential equations. 
+            Provide an incredibly detailed, step-by-step mathematical explanation of the solution process. 
+            Use LaTeX for all mathematical expressions. 
+            Break the solution down into logical phases:
+            1. System Analysis (eigenvalues/eigenvectors).
+            2. General Solution Construction.
+            3. Particular Solution (if applicable).
+            4. Final specific result for the target time.
+
+            Be as verbose as possible. Provide at least 4-5 detailed paragraphs of mathematical reasoning. 
+            Do not provide a brief summary.
+        """).strip()
         client = get_gemini_client()
-        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-pro')
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-pro-latest')
         
         if not client:
             return JsonResponse({
@@ -690,9 +703,12 @@ class AIStumperView(View):
     
     def post(self, request):
         """Analyze why the ODE task is a 'stumper'"""
-        system_instruction = "You are an expert mathematician and computer scientist. Explain why specific mathematical problems are difficult for AI models or numerical solvers to handle reliably."
+        system_instruction = textwrap.dedent("""
+            You are an expert mathematician and computer scientist. 
+            Explain why specific mathematical problems are difficult for AI models or numerical solvers to handle reliably.
+        """).strip()
         client = get_gemini_client()
-        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-pro')
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-pro-latest')
         
         if not client:
             return JsonResponse({
@@ -730,7 +746,8 @@ Talk about things like:
 2. Numerical stability issues (error accumulation over time).
 3. The specific structure of the coefficients that makes analytical or numerical solving 'tricky'.
 
-Provide a detailed technical analysis. Do not be overly concise; explain the 'why' thoroughly."""
+Provide a high-level technical thesis. Write at least 3 detailed paragraphs explaining the underlying mathematical 'traps' in this specific system. Do not be concise; be exhaustive.
+"""
             
             response = client.models.generate_content(
                 model=model_name,
