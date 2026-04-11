@@ -3,6 +3,24 @@ import React, { useState, useEffect } from 'react';
 // API base URL - direct connection to Django backend
 const API_BASE = 'http://localhost:8001/api';
 
+// Inline CSS for the spinner
+const spinnerStyles = `
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .math-spinner-small {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #60a5fa;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+  }
+`;
+
 function App() 
 {
   // Authentication state
@@ -675,7 +693,11 @@ const generateNewTask = async () => {
               justifyContent: 'center',
               gap: '20px'
             }}>
-              <div className="spinner"></div>
+              <style>{spinnerStyles}</style>
+              <div className="math-spinner-small" style={{ width: '40px', height: '40px', borderWidth: '4px' }}></div>
+              <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
+                🚀 Preparing Mathematical Challenge...
+              </h2>
               <p style={{ color: '#94a3b8', fontSize: '16px' }}>
                 Initializing system state and calculating solutions
               </p>
@@ -840,46 +862,58 @@ const generateNewTask = async () => {
               )}
 
               {/* AI Explanation Result */}
-              {aiExplanation && (
-                <div style={{
-                  marginTop: '20px',
-                  padding: '24px',
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(30, 41, 59, 0.4)',
-                  border: '1px solid rgba(59, 130, 246, 0.5)',
-                  color: '#e2e8f0',
-                  fontSize: '15px',
-                  lineHeight: '1.6',
-                  textAlign: 'left',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}>
-                  <h4 style={{ color: '#60a5fa', fontSize: '18px', fontWeight: '700', margin: '0 0 16px 0', borderBottom: '1px solid rgba(96, 165, 250, 0.2)', paddingBottom: '8px' }}>
-                    Mathematical Explanation
-                  </h4>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{aiExplanation}</div>
-                </div>
-              )}
+              <div style={{
+                marginTop: '20px',
+                padding: '24px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.4)',
+                border: '1px solid rgba(59, 130, 246, 0.5)',
+                color: '#e2e8f0',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                textAlign: 'left',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                minHeight: '100px'
+              }}>
+                <h4 style={{ color: '#60a5fa', fontSize: '18px', fontWeight: '700', margin: '0 0 16px 0', borderBottom: '1px solid rgba(96, 165, 250, 0.2)', paddingBottom: '8px' }}>
+                  Mathematical Explanation
+                </h4>
+                {aiExplanation ? (
+                   <div style={{ whiteSpace: 'pre-wrap' }}>{aiExplanation}</div>
+                ) : (
+                   <div style={{ color: '#64748b', display: 'flex', alignItems: 'center' }}>
+                     <div className="math-spinner-small"></div>
+                     Calculating exhaustive PhD-level derivation...
+                   </div>
+                )}
+              </div>
 
               {/* AI Stumper Result */}
-              {aiStumper && (
-                <div style={{
-                  marginTop: '20px',
-                  padding: '24px',
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(30, 41, 59, 0.4)',
-                  border: '1px solid rgba(245, 158, 11, 0.5)',
-                  color: '#e2e8f0',
-                  fontSize: '15px',
-                  lineHeight: '1.6',
-                  textAlign: 'left',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}>
-                  <h4 style={{ color: '#fbbf24', fontSize: '18px', fontWeight: '700', margin: '0 0 16px 0', borderBottom: '1px solid rgba(251, 191, 36, 0.2)', paddingBottom: '8px' }}>
-                    Stumper Analysis
-                  </h4>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{aiStumper}</div>
-                </div>
-              )}
+              <div style={{
+                marginTop: '20px',
+                padding: '24px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.4)',
+                border: '1px solid rgba(245, 158, 11, 0.5)',
+                color: '#e2e8f0',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                textAlign: 'left',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                minHeight: '100px'
+              }}>
+                <h4 style={{ color: '#fbbf24', fontSize: '18px', fontWeight: '700', margin: '0 0 16px 0', borderBottom: '1px solid rgba(251, 191, 36, 0.2)', paddingBottom: '8px' }}>
+                  Technical Stability Analysis
+                </h4>
+                {aiStumper ? (
+                   <div style={{ whiteSpace: 'pre-wrap' }}>{aiStumper}</div>
+                ) : (
+                   <div style={{ color: '#64748b', display: 'flex', alignItems: 'center' }}>
+                     <div className="math-spinner-small" style={{ borderTopColor: '#fbbf24' }}></div>
+                     Performing rigorous stability and stiffness verification...
+                   </div>
+                )}
+              </div>
 
               {/* LaTeX Preview */}
               {currentTask.equation_preview && currentTask.equation_preview.raw_latex && (
