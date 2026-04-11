@@ -625,8 +625,8 @@ class AIExplanationView(View):
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
-                    temperature=0.7,
-                    max_output_tokens=2048,
+                    temperature=0.3,
+                    max_output_tokens=4096,
                 )
             )
             ai_explanation = response.text
@@ -648,8 +648,8 @@ class AIExplanationView(View):
         """Build a rigorous, exhaustive mathematical derivation for the AI"""
         linear = coefficients.get('linear', [])
         
-        prompt = f"""COMMAND: Perform a RIGOROUS, EXHAUSTIVE, multi-paragraph mathematical derivation for the solution of the following linear system. 
-DO NOT PROVIDE A SUMMARY. Provide at least 5-6 paragraphs of deep mathematical analysis.
+        prompt = f"""COMMAND: Perform a COMPREHENSIVE TECHNICAL SOLUTION REPORT for the following linear system. 
+DO NOT PROVIDE A SUMMARY. Provide at least 5-6 paragraphs of rigorous mathematical analysis.
 
 The system is defined as dU/dt = A*U where U(t) = [x, y, z, w]^T and the coefficient matrix A is:
 {linear[0][0]:.4f} {linear[0][1]:.4f} {linear[0][2]:.4f} {linear[0][3]:.4f}
@@ -663,14 +663,14 @@ y(0) = {initial_conditions['y0']}
 z(0) = {initial_conditions['z0']}
 w(0) = {initial_conditions['w0']}
 
-Your derivation must include:
-1. System Analysis: An exhaustive eigenvalue and eigenvector analysis of matrix A.
-2. Analytical Solution Construction: The complete derivation of the general solution.
-3. Particular Evaluation: Step-by-step calculation leading to the state at t={target_time}.
-4. Numerical Verification: Comparison of the derivation with the provided numerical result:
+Your report must include:
+1. Spectral Analysis: An exhaustive eigenvalue and eigenvector analysis of matrix A.
+2. Derivation of the General Solution: The complete construction of the time-dependent state vector.
+3. Particular State Evaluation: Step-by-step calculation leading to the state at t={target_time}.
+4. Technical Verification: Comparison of the derived state with the provided numerical result:
    x({target_time}) = {final_values[0]:.6f}, y({target_time}) = {final_values[1]:.6f}, z({target_time}) = {final_values[2]:.6f}, w({target_time}) = {final_values[3]:.6f}
 
-REITERATE: Be meticulously detailed and as verbose as possible. This is a technical report for PhD-level research.
+REITERATE: Be as verbose and technically detailed as possible. No brevity allowed.
 """
         
         return prompt
@@ -735,8 +735,8 @@ REITERATE: This is for PhD-level research. Be as verbose and technically detaile
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
-                    temperature=0.7,
-                    max_output_tokens=2048,
+                    temperature=0.3,
+                    max_output_tokens=4096,
                 )
             )
             analysis = response.text
