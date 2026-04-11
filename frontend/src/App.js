@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 // API base URL - direct connection to Django backend
 const API_BASE = 'http://localhost:8001/api';
 
-function App() {
+function App() 
+{
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState(null);
@@ -45,11 +46,11 @@ function App() {
     setLoading(false);
   };
 
-  const handleGetAIHint = async () => {
+  const handleGetAIHint = async (taskId) => {
     setLoading(true);
     setAIHint(null);
     try {
-      const result = await getAIHint();
+      const result = await getAIHint(taskId);
       if (result.error) {
         setMessage(result.error);
       } else {
@@ -80,6 +81,8 @@ function App() {
         setUsername(data.username);
         if (data.is_authenticated) {
           setShowMatrix(true);
+          setShowLogin(false);
+          setShowRegister(false);
           loadProblems();
         }
       }
@@ -225,14 +228,15 @@ const getAIExplanation = async (taskId) => {
   }
 };
 
-const getAIHint = async () => {
+const getAIHint = async (taskId) => {
   try {
     const response = await fetch(`${API_BASE}/hint/`, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({ task_id: taskId, question: "I need a general hint on how to proceed." })
     });
     if (response.ok) {
       return await response.json();
@@ -837,7 +841,7 @@ const generateNewTask = async () => {
                     {loading ? 'Loading...' : 'Get AI Explanation'}
                   </button>
                   <button
-                    onClick={handleGetAIHint}
+                    onClick={() => handleGetAIHint(currentTask.task_id)}
                     disabled={loading}
                     style={{
                       padding: '10px 16px',
@@ -852,6 +856,21 @@ const generateNewTask = async () => {
                   >
                     {loading ? 'Loading...' : 'Get AI Hint'}
                   </button>
+                </div>
+              )}
+
+              {/* Message Display */}
+              {message && !message.includes('Loading') && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '12px',
+                  backgroundColor: message.toLowerCase().includes('error') || message.toLowerCase().includes('failed') || message.toLowerCase().includes('not configured') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                  border: `1px solid ${message.toLowerCase().includes('error') || message.toLowerCase().includes('failed') || message.toLowerCase().includes('not configured') ? '#ef4444' : '#3b82f6'}`,
+                  borderRadius: '8px',
+                  color: message.toLowerCase().includes('error') || message.toLowerCase().includes('failed') || message.toLowerCase().includes('not configured') ? '#f87171' : '#60a5fa',
+                  fontSize: '14px'
+                }}>
+                  {message}
                 </div>
               )}
 
