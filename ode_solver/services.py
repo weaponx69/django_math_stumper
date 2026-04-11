@@ -150,6 +150,21 @@ class ODEGenerator:
         print(f"DEBUG: generate_valid_ode_task failed after all {self.max_attempts} attempts")
         return None
 
+    def find_task_by_answer(self, target_solution: int) -> Optional[Dict]:
+        """Loop until a task with the specific target_solution is found"""
+        import time
+        start_time = time.time()
+        max_duration = 30.0
+        
+        for attempt in range(500):
+            if time.time() - start_time > max_duration:
+                break
+            task = self.generate_valid_ode_task()
+            if task and task['solution']['final_solution'] == target_solution:
+                print(f"DEBUG: Found task for target {target_solution} after {attempt + 1} attempts")
+                return task
+        return None
+
     def create_custom_task(self, coefficients: Dict[str, List[List[float]]], 
                           initial_conditions: Tuple[float, float, float, float], 
                           target_time: float) -> Optional[Dict]:

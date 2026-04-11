@@ -21,8 +21,8 @@
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React, MathJax 3, Vanilla CSS.
-- **Backend:** Django, Django REST Framework.
+- **Frontend:** React, MathJax 3, Nginx (Production).
+- **Backend:** Django, Django REST Framework, Gunicorn.
 - **Database:** PostgreSQL 15.
 - **AI Engine:** Google Gemini (Generative AI SDK).
 
@@ -44,6 +44,21 @@ GEMINI_MODEL=gemini-flash-latest
 docker compose up --build
 ```
 *Accessible at: [http://localhost:3000](http://localhost:3000)*
+
+---
+
+## ☁️ Cloud Deployment (Amazon EC2)
+
+The project is optimized for "Lift and Shift" deployment to AWS.
+
+### 📝 Detailed Guide
+For step-by-step instructions on launching an instance, configuring security groups, and installing Docker on AWS, see:
+👉 **[Amazon EC2 Deployment Guide](./deployment_ec2.md)**
+
+### Production Highlights:
+*   **Ready-to-Go Proxy:** Uses Nginx to handle frontend-to-backend communication automatically.
+*   **Security Groups:** Requires ports 80 (HTTP) and 22 (SSH) to be open.
+*   **Environment Support:** Uses `.env` for easy configuration of `ALLOWED_HOSTS` and API keys.
 
 ---
 
@@ -76,12 +91,6 @@ python manage.py runserver 8001
 cd frontend
 npm install
 npm start
-```
-
-### 3. One-Command Dev Mode
-If the database is already running, you can use the built-in dev script from the root:
-```bash
-./start_dev.sh
 ```
 
 ---

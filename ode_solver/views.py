@@ -26,10 +26,7 @@ def get_gemini_client():
     return genai.Client(api_key=api_key)
 
 
-def index(request):
-    """Redirect to React frontend"""
-    from django.http import HttpResponseRedirect
-    return HttpResponseRedirect('http://localhost:3000')
+
 
 
 class UserView(View):
@@ -381,7 +378,9 @@ class VerifySolutionView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class TaskDetailView(View):
+
     """API endpoint to get details of a specific task"""
     
     def get(self, request, task_id):
@@ -427,6 +426,60 @@ class TaskDetailView(View):
             
         except ODETask.DoesNotExist:
             return JsonResponse({'error': 'Task not found'}, status=404)
+
+    def patch(self, request, task_id):
+        """Update coefficients and re-solve the ODE system"""
+        try:
+            ode_task = ODETask.objects.get(pk=task_id)
+            data = json.loads(request.body)
+            coefficients = data.get('coefficients')
+            
+            if not coefficients:
+                return JsonResponse({'error': 'No coefficients provided'}, status=400)
+                
+            # Update the task parameters
+            ode_task.coefficients = coefficients
+            
+            # Re-solve the system
+            generator = ODEGenerator()
+            initial_conditions = (
+                float(ode_task.x0), float(ode_task.y0),
+                float(ode_task.z0), float(ode_task.w0)
+            )
+            result = generator.create_custom_task(
+                coefficients, initial_conditions, float(ode_task.target_time)
+            )
+            
+            if not result:
+                return JsonResponse({'error': 'Failed to solve updated system'}, status=500)
+                
+            # Update computed values
+            solution = result['solution']
+            ode_task.x_final = Decimal(str(solution['final_values'][0]))
+            ode_task.y_final = Decimal(str(solution['final_values'][1]))
+            ode_task.z_final = Decimal(str(solution['final_values'][2]))
+            ode_task.w_final = Decimal(str(solution['final_values'][3]))
+            ode_task.weighted_sum = Decimal(str(solution['weighted_sum']))
+            ode_task.arc_length = Decimal(str(solution['arc_length']))
+            ode_task.final_solution = solution['final_solution']
+            ode_task.save()
+            
+            return JsonResponse({'success': True, 'task_id': ode_task.pk, 'final_solution': ode_task.final_solution})
+            
+        except ODETask.DoesNotExist:
+            return JsonResponse({'error': 'Task not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    def delete(self, request, task_id):
+        """Delete a specific ODE task"""
+        try:
+            ode_task = ODETask.objects.get(pk=task_id)
+            ode_task.delete()
+            return JsonResponse({'success': True})
+        except ODETask.DoesNotExist:
+            return JsonResponse({'error': 'Task not found'}, status=404)
+
 
 
 class ProblemListView(View):
@@ -753,3 +806,47 @@ REITERATE: This is for PhD-level research. Be as verbose and technically detaile
                 'error': str(e),
                 'success': False
             }, status=500)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GenerateByAnswerView(View):
+
+    """API endpoint to generate a task matching a specific answer"""
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            target = data.get('target')
+            
+            if target is None:
+                return JsonResponse({'error': 'No target answer provided'}, status=400)
+                
+            generator = ODEGenerator()
+            task_data = generator.find_task_by_answer(int(target))
+            
+            if not task_data:
+                return JsonResponse({'error': f'Could not find a task matching {target} within time limit'}, status=404)
+                
+            # Create the database record
+            solution = task_data['solution']
+            ode_task = ODETask.objects.create(
+                coefficients=task_data['coefficients'],
+                x0=Decimal(str(task_data['initial_conditions']['x0'])),
+                y0=Decimal(str(task_data['initial_conditions']['y0'])),
+                z0=Decimal(str(task_data['initial_conditions']['z0'])),
+                w0=Decimal(str(task_data['initial_conditions']['w0'])),
+                target_time=Decimal(str(task_data['target_time'])),
+                x_final=Decimal(str(solution['final_values'][0])),
+                y_final=Decimal(str(solution['final_values'][1])),
+                z_final=Decimal(str(solution['final_values'][2])),
+                w_final=Decimal(str(solution['final_values'][3])),
+                weighted_sum=Decimal(str(solution['weighted_sum'])),
+                arc_length=Decimal(str(solution['arc_length'])),
+                final_solution=solution['final_solution'],
+                is_valid=True
+            )
+            
+            return JsonResponse({'success': True, 'task_id': ode_task.pk})
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
-// API base URL - direct connection to Django backend
-const API_BASE = 'http://localhost:8001/api';
+// API base URL - Using relative path for Nginx production proxy
+const API_BASE = '/api';
 
-// Inline CSS for the spinner
+
 const spinnerStyles = `
   @keyframes spin {
     to { transform: rotate(360deg); }
@@ -46,6 +46,12 @@ function App()
   const [verificationResult, setVerificationResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Loading...');
+
+  // New Management State
+  const [targetAnswer, setTargetAnswer] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableCoefficients, setEditableCoefficients] = useState(null);
+
 
   // AI Assistance handlers
   const handleGetAIExplanation = async (taskId) => {
@@ -285,45 +291,41 @@ const generateNewTask = async () => {
   setUserSolution('');
   setAIExplanation(null);
   setAIStumper(null);
-  setMessage('Generating problem and analyzing with AI...');
+  setMessage('Generating problem...');
   
   try {
     const response = await fetch(`${API_BASE}/generate/`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
     });
     
     if (response.ok) {
       const data = await response.json();
-      setCurrentTask(data);
+      setCurrentTask(data); // INSTANT REVEAL: Show the problem now!
+      setLoading(false);      // Stop the main "Calculating" spinner
+      setMessage('');
       
-      // Automatically fetch AI content in parallel
-      const [explRes, stumpRes] = await Promise.all([
-        getAIExplanation(data.task_id),
-        getStumperAnalysis(data.task_id)
-      ]);
+      // Load AI analysis in the background
+      getAIExplanation(data.task_id).then(res => {
+        if (res.explanation) setAIExplanation(res.explanation);
+      });
       
-      if (explRes.explanation) setAIExplanation(explRes.explanation);
-      if (explRes.error) setMessage(explRes.error);
+      getStumperAnalysis(data.task_id).then(res => {
+        if (res.analysis) setAIStumper(res.analysis);
+      });
       
-      if (stumpRes.analysis) setAIStumper(stumpRes.analysis);
-      if (stumpRes.error) setMessage(stumpRes.error);
-      
-      if (!explRes.error && !stumpRes.error) {
-        setMessage('');
-      }
     } else {
       const errorData = await response.json();
       setMessage('Failed to generate task: ' + (errorData.error || 'Unknown error'));
+      setLoading(false);
     }
   } catch (error) {
     setMessage('Error: ' + error.message);
+    setLoading(false);
   }
-  setLoading(false);
 };
+
   const verifySolution = async () => {
     if (!currentTask || !userSolution) return;
     try {
@@ -358,12 +360,140 @@ const generateNewTask = async () => {
       if (response.ok) {
         const data = await response.json();
         setCurrentTask(data);
+        const [explRes, stumpRes] = await Promise.all([
+          getAIExplanation(data.task_id),
+          getStumperAnalysis(data.task_id)
+        ]);
+        if (explRes.explanation) setAIExplanation(explRes.explanation);
+        if (stumpRes.analysis) setAIStumper(stumpRes.analysis);
       }
     } catch (error) {
       console.error('Failed to load problem:', error);
     }
     setLoading(false);
   };
+
+
+  const deleteProblem = async (e, taskId) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this challenge?')) return;
+    try {
+      const response = await fetch(`${API_BASE}/task/${taskId}/`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        if (currentTask && currentTask.task_id === taskId) {
+          setCurrentTask(null);
+          setAIExplanation(null);
+          setAIStumper(null);
+        }
+        loadProblems();
+      }
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  };
+
+  const handleGenerateByTarget = async () => {
+    if (!targetAnswer || isNaN(targetAnswer)) {
+      setMessage('Please enter a valid target answer (0-999)');
+      return;
+    }
+    setLoading(true);
+    setVerificationResult(null);
+    setUserSolution('');
+    setAIExplanation(null);
+    setAIStumper(null);
+    setMessage(`Searching for an equation that equals ${targetAnswer}...`);
+    try {
+      const response = await fetch(`${API_BASE}/generate_by_answer/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ target: parseInt(targetAnswer) })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const taskResponse = await fetch(`${API_BASE}/task/${data.task_id}/`, {
+          credentials: 'include'
+        });
+        const taskData = await taskResponse.json();
+        setCurrentTask(taskData);
+        loadProblems();
+        setLoading(false);
+        setMessage('');
+
+        // Background AI load
+        getAIExplanation(taskData.task_id).then(res => {
+          if (res.explanation) setAIExplanation(res.explanation);
+        });
+        getStumperAnalysis(taskData.task_id).then(res => {
+          if (res.analysis) setAIStumper(res.analysis);
+        });
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.error || 'Failed to find matching system');
+        setLoading(false);
+      }
+    } catch (error) {
+      setMessage('Error: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const toggleEdit = () => {
+    if (!isEditing && currentTask) {
+      setEditableCoefficients(JSON.parse(JSON.stringify(currentTask.coefficients)));
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleCoefficientChange = (rowIdx, colIdx, value) => {
+    const newData = { ...editableCoefficients };
+    newData.linear[rowIdx][colIdx] = parseFloat(value) || 0;
+    setEditableCoefficients(newData);
+  };
+
+  const handleRecalculate = async () => {
+    if (!currentTask) return;
+    setLoading(true);
+    setMessage('Recalculating system solutions...');
+    try {
+      const response = await fetch(`${API_BASE}/task/${currentTask.task_id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ coefficients: editableCoefficients })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const taskResponse = await fetch(`${API_BASE}/task/${data.task_id}/`, {
+          credentials: 'include'
+        });
+        const taskData = await taskResponse.json();
+        setCurrentTask(taskData);
+        setIsEditing(false);
+        setLoading(false);
+        setMessage('System updated successfully');
+
+        // Background AI load
+        getAIExplanation(taskData.task_id).then(res => {
+          if (res.explanation) setAIExplanation(res.explanation);
+        });
+        getStumperAnalysis(taskData.task_id).then(res => {
+          if (res.analysis) setAIStumper(res.analysis);
+        });
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      setMessage('Update failed: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+
 
   // Render login form
   if (showLogin) {
@@ -714,29 +844,95 @@ const generateNewTask = async () => {
                 <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'white', margin: 0 }}>
                   ODE System Matrix
                 </h2>
-                <button
-                  onClick={generateNewTask}
-                  disabled={loading}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: 'transparent',
-                    color: '#60a5fa',
-                    border: '1px solid #60a5fa',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  New Challenge
-                </button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="Target Ans (0-999)"
+                    value={targetAnswer}
+                    onChange={(e) => setTargetAnswer(e.target.value)}
+                    style={{
+                      width: '120px',
+                      padding: '8px',
+                      backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontSize: '13px'
+                    }}
+                  />
+                  <button
+                    onClick={handleGenerateByTarget}
+                    disabled={loading || !targetAnswer}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#4f46e5',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Generate by Target
+                  </button>
+                  <button
+                    onClick={generateNewTask}
+                    disabled={loading}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: 'transparent',
+                      color: '#60a5fa',
+                      border: '1px solid #60a5fa',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Random Challenge
+                  </button>
+                </div>
               </div>
 
               {/* Coefficient Matrix Display */}
               {currentTask.coefficients && currentTask.coefficients.linear && (
                 <div style={{ marginBottom: '24px' }}>
-                  <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '12px' }}>
-                    System: dU/dt = A · U, where U = [x, y, z, w]ᵀ
-                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
+                      System: dU/dt = A · U, where U = [x, y, z, w]ᵀ
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={toggleEdit}
+                        style={{
+                          padding: '4px 12px',
+                          backgroundColor: isEditing ? '#ef4444' : 'transparent',
+                          color: isEditing ? 'white' : '#60a5fa',
+                          border: `1px solid ${isEditing ? '#ef4444' : '#60a5fa'}`,
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isEditing ? 'Cancel Edit' : 'Enable Manual Edit'}
+                      </button>
+                      {isEditing && (
+                        <button
+                          onClick={handleRecalculate}
+                          style={{
+                            padding: '4px 12px',
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Recalculate Solution
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <div style={{
                     display: 'flex',
                     justifyContent: 'center',
@@ -753,22 +949,39 @@ const generateNewTask = async () => {
                       display: 'grid',
                       gridTemplateColumns: 'repeat(4, 1fr)',
                       gap: '4px',
-                      border: '3px solid #4f46e5',
+                      border: isEditing ? '3px dashed #ef4444' : '3px solid #4f46e5',
                       borderRadius: '8px',
                       padding: '8px',
                       backgroundColor: 'rgba(79, 70, 229, 0.1)'
                     }}>
-                      {currentTask.coefficients.linear.map((row, i) =>
+                      {(isEditing ? editableCoefficients : currentTask.coefficients).linear.map((row, i) =>
                         row.map((val, j) => (
                           <div key={`${i}-${j}`} style={{
-                            padding: '8px 16px',
-                            textAlign: 'center',
+                            padding: '4px',
                             backgroundColor: 'rgba(30, 41, 59, 0.8)',
                             borderRadius: '4px',
-                            color: '#e2e8f0',
+                            color: isEditing ? '#fbbf24' : '#e2e8f0',
                             minWidth: '80px'
                           }}>
-                            {parseFloat(val).toFixed(4)}
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={val}
+                                onChange={(e) => handleCoefficientChange(i, j, e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  backgroundColor: 'transparent',
+                                  border: 'none',
+                                  color: 'inherit',
+                                  textAlign: 'center',
+                                  fontSize: '16px',
+                                  outline: 'none'
+                                }}
+                              />
+                            ) : (
+                              parseFloat(val).toFixed(4)
+                            )}
                           </div>
                         ))
                       )}
@@ -952,7 +1165,7 @@ const generateNewTask = async () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {problems.slice(0, 10).map((problem) => (
-                  <button
+                  <div
                     key={problem.id}
                     onClick={() => selectProblem(problem)}
                     style={{
@@ -965,23 +1178,47 @@ const generateNewTask = async () => {
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.2s',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
                     }}
                     onMouseOver={(e) => {
-                      e.target.style.backgroundColor = 'rgba(79, 70, 229, 0.2)';
-                      e.target.style.borderColor = '#4f46e5';
+                      if (e.currentTarget === e.target || e.currentTarget.contains(e.target)) {
+                        e.currentTarget.style.backgroundColor = 'rgba(79, 70, 229, 0.2)';
+                        e.currentTarget.style.borderColor = '#4f46e5';
+                      }
                     }}
                     onMouseOut={(e) => {
-                      e.target.style.backgroundColor = 'rgba(30, 41, 59, 0.5)';
-                      e.target.style.borderColor = '#334155';
+                      if (e.currentTarget === e.target || e.currentTarget.contains(e.target)) {
+                        e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.5)';
+                        e.currentTarget.style.borderColor = '#334155';
+                      }
                     }}
                   >
-                    <div style={{ color: '#60a5fa', fontWeight: '600', marginBottom: '4px' }}>
-                      Problem #{problem.task_id}
+                    <div>
+                      <div style={{ color: '#60a5fa', fontWeight: '600', marginBottom: '24x' }}>
+                        Problem #{problem.task_id}
+                      </div>
+                      <div style={{ color: '#64748b', fontSize: '12px' }}>
+                        t_f = {problem.target_time?.toFixed(3)}
+                      </div>
                     </div>
-                    <div style={{ color: '#64748b', fontSize: '12px' }}>
-                      t_f = {problem.target_time?.toFixed(3)}
-                    </div>
-                  </button>
+                    <button
+                      onClick={(e) => deleteProblem(e, problem.task_id)}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        color: '#64748b',
+                        cursor: 'pointer',
+                        fontSize: '16px'
+                      }}
+                      onMouseOver={(e) => e.target.style.color = '#ef4444'}
+                      onMouseOut={(e) => e.target.style.color = '#64748b'}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

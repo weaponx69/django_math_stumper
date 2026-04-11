@@ -17,5 +17,7 @@ urlpatterns = [
     path('api/auth/login/', views.ApiLoginView.as_view(), name='api_login'),
     path('api/auth/logout/', auth_views.LogoutView.as_view(), name='api_logout'),
     path('api/auth/register/', views.RegisterView.as_view(), name='api_register'),
-    path('', views.index, name='index'),
+    path('api/generate_by_answer/', views.GenerateByAnswerView.as_view(), name='generate_by_answer'),
+
+
 ]
