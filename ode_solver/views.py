@@ -11,15 +11,24 @@ import decimal
 from decimal import Decimal
 from .models import ODETask
 from .services import ODEGenerator, format_latex_solution, format_equation_latex
-import openai
+import google.generativeai as genai
 
 
-def get_openai_client():
-    """Get OpenAI client with API key from settings"""
-    api_key = getattr(settings, 'OPENAI_API_KEY', None)
+def get_gemini_model(system_instruction=None):
+    """Get Gemini model with API key from settings"""
+    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    if not api_key:
+        api_key = getattr(settings, 'OPENAI_API_KEY', None)
+        
     if not api_key or api_key == 'your-openai-api-key-here':
         return None
-    return openai.OpenAI(api_key=api_key)
+        
+    genai.configure(api_key=api_key)
+    model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash')
+    
+    if system_instruction:
+        return genai.GenerativeModel(model_name, system_instruction=system_instruction)
+    return genai.GenerativeModel(model_name)
 
 
 def index(request):
@@ -576,11 +585,12 @@ class AIExplanationView(View):
     
     def get(self, request, task_id):
         """Generate an AI explanation for a specific ODE task"""
-        client = get_openai_client()
+        system_instruction = "You are an expert mathematics tutor specializing in differential equations. Explain concepts clearly with step-by-step reasoning. Use LaTeX formatting for mathematical expressions when helpful."
+        model = get_gemini_model(system_instruction=system_instruction)
         
-        if not client:
+        if not model:
             return JsonResponse({
-                'error': 'OpenAI API key not configured. Please set OPENAI_API_KEY in .env file.',
+                'error': 'Gemini API key not configured. Please set GEMINI_API_KEY in .env file.',
                 'configured': False
             }, status=503)
         
@@ -612,30 +622,19 @@ class AIExplanationView(View):
                 coefficients, initial_conditions, target_time, final_values
             )
             
-            # Call OpenAI API
-            model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert mathematics tutor specializing in differential equations. Explain concepts clearly with step-by-step reasoning. Use LaTeX formatting for mathematical expressions when helpful."
-                    },
-                    {
-                        "role": "user", 
-                        "content": prompt
-                    }
-                ],
+            # Call Gemini API
+            generation_config = genai.types.GenerationConfig(
                 temperature=0.7,
-                max_tokens=1500
+                max_output_tokens=1500,
             )
+            response = model.generate_content(prompt, generation_config=generation_config)
             
-            ai_explanation = response.choices[0].message.content
+            ai_explanation = response.text
             
             return JsonResponse({
                 'task_id': task_id,
                 'explanation': ai_explanation,
-                'model_used': model,
+                'model_used': getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash'),
                 'success': True
             })
             
@@ -693,11 +692,12 @@ class AIHintView(View):
     
     def post(self, request):
         """Generate a hint for an ODE task based on user's progress"""
-        client = get_openai_client()
+        system_instruction = "You are a helpful math tutor. Give concise, encouraging hints."
+        model = get_gemini_model(system_instruction=system_instruction)
         
-        if not client:
+        if not model:
             return JsonResponse({
-                'error': 'OpenAI API key not configured.',
+                'error': 'Gemini API key not configured.',
                 'configured': False
             }, status=503)
         
@@ -729,24 +729,13 @@ The user asks: "{user_question}"
 
 Provide a helpful hint (2-3 sentences max) that guides them without giving away the full solution. Be encouraging and specific."""
             
-            model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful math tutor. Give concise, encouraging hints."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
+            generation_config = genai.types.GenerationConfig(
                 temperature=0.7,
-                max_tokens=200
+                max_output_tokens=200,
             )
+            response = model.generate_content(prompt, generation_config=generation_config)
             
-            hint = response.choices[0].message.content
+            hint = response.text
             
             return JsonResponse({
                 'hint': hint,
